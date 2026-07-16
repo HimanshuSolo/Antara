@@ -9,11 +9,25 @@ project self-supervised: no manual labeling, just real consecutive scans.
 from __future__ import annotations
 
 import argparse
+import re
+from datetime import datetime
 from pathlib import Path
 
 import cv2
 import numpy as np
 import xarray as xr
+
+# GOES filenames embed the scan start time as sYYYYDDDHHMMSSf (day-of-year,
+# tenths-of-a-second dropped below) -- e.g. s20241001200206 = 2024, day 100,
+# 12:00:20.6 UTC.
+_SCAN_TIME_RE = re.compile(r"_s(\d{13})\d")
+
+
+def parse_scan_time(nc_path: Path) -> datetime:
+    match = _SCAN_TIME_RE.search(nc_path.name)
+    if not match:
+        raise ValueError(f"Could not find a scan start timestamp in {nc_path.name}")
+    return datetime.strptime(match.group(1), "%Y%j%H%M%S")
 
 
 def load_radiance(nc_path: Path) -> np.ndarray:
@@ -54,22 +68,49 @@ def scan_to_patch(nc_path: Path, center: tuple[int, int], size: int) -> np.ndarr
 
 
 def build_triplets(
-    nc_paths: list[Path], center: tuple[int, int], size: int, out_dir: Path
+    nc_paths: list[Path],
+    center: tuple[int, int],
+    size: int,
+    out_dir: Path,
+    max_gap_ratio: float = 1.5,
 ) -> list[Path]:
     """Group consecutive scans (sorted by filename, which sorts by scan
     start time since GOES keys are zero-padded) into overlapping triplets
     and save each as a 3-frame PNG set.
+
+    A missed/dropped scan (sensor recalibration, downlink gap) would
+    otherwise silently produce a degenerate triplet where t-1 to t+1 spans
+    far more time than intended -- a bad training/eval example that looks
+    fine until you check timestamps. Any triplet whose adjacent gap
+    exceeds `max_gap_ratio` times the dataset's median cadence is skipped.
     """
     nc_paths = sorted(nc_paths)
     out_dir.mkdir(parents=True, exist_ok=True)
+
+    times = [parse_scan_time(p) for p in nc_paths]
+    gaps = [times[i + 1] - times[i] for i in range(len(times) - 1)]
+    if not gaps:
+        return []
+    median_gap = sorted(gaps)[len(gaps) // 2]
+
     written = []
+    skipped = 0
     for i in range(len(nc_paths) - 2):
+        gap_prev = times[i + 1] - times[i]
+        gap_next = times[i + 2] - times[i + 1]
+        if gap_prev > median_gap * max_gap_ratio or gap_next > median_gap * max_gap_ratio:
+            skipped += 1
+            continue
+
         triplet_dir = out_dir / f"triplet_{i:04d}"
         triplet_dir.mkdir(exist_ok=True)
         for offset, name in zip((0, 1, 2), ("t-1", "t", "t+1")):
             patch = scan_to_patch(nc_paths[i + offset], center, size)
             cv2.imwrite(str(triplet_dir / f"{name}.png"), patch)
         written.append(triplet_dir)
+
+    if skipped:
+        print(f"Skipped {skipped} triplet(s) with an abnormal scan gap (missing scan)")
     return written
 
 
