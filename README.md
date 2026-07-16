@@ -21,7 +21,8 @@ on fast, non-linear cloud dynamics.
       AWS Open Data bucket, extract patch triplets `(t-1, t, t+1)`.
 - [x] Classical baseline: Farneback dense optical flow + bidirectional warp/blend.
 - [x] Evaluation: PSNR/SSIM against the real held-out middle frame.
-- [ ] Deep optical-flow interpolation (fine-tuned RIFE/FILM) — the core contribution.
+- [x] Pretrained deep interpolation (FILM, zero-shot): 30.7 dB / 0.87 SSIM vs. baseline's 24.4 dB / 0.57 SSIM.
+- [ ] Fine-tune FILM on satellite triplets — the core contribution.
 - [ ] Cyclone/calm evaluation split via IBTrACS.
 - [ ] INSAT-3D/3DR validation via MOSDAC (stretch).
 
@@ -56,6 +57,11 @@ python3 -m venv .venv
 .venv/bin/python -m src.eval.evaluate_baseline \
   --triplets-dir data/processed/triplets --out-csv data/processed/baseline_results.csv
 
+# 4. Download the pretrained FILM checkpoint and evaluate it (no fine-tuning yet)
+.venv/bin/python -m src.deep.download_film --out models/film_net_fp32.pt
+.venv/bin/python -m src.eval.evaluate_film \
+  --triplets-dir data/processed/triplets --model-path models/film_net_fp32.pt --out-csv data/processed/film_results.csv
+
 # Run tests
 .venv/bin/python -m pytest tests/ -v
 ```
@@ -67,9 +73,12 @@ src/
   data/       fetch_goes.py        — download GOES-16 scans (public AWS Open Data)
               extract_triplets.py  — NetCDF radiance -> normalized patch triplets
   baseline/   farneback_interpolate.py — classical optical-flow interpolation
+  deep/       download_film.py     — fetch pretrained FILM TorchScript checkpoint
+              film_interpolate.py  — deep frame interpolation (FILM)
   eval/       metrics.py           — PSNR/SSIM
-              evaluate_baseline.py — run baseline over all triplets, report metrics
-tests/        unit tests for metrics + baseline interpolation
+              evaluate_baseline.py — run Farneback baseline over all triplets
+              evaluate_film.py     — run FILM over all triplets
+tests/        unit tests for metrics, baseline, and FILM interpolation
 ```
 
 ## Data source
