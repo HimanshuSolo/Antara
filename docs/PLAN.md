@@ -36,7 +36,15 @@ Training data is just real triplets `(frame_{t-1}, frame_t, frame_{t+1})` pulled
 ## Suggested semester timeline
 1. ~~**Weeks 1–2**: Data pipeline — pull GOES/Himawari triplets from AWS Open Data, build patch extraction, implement the Farneback baseline end-to-end.~~ **Done.**
 2. ~~**Weeks 3–5**: Get a pretrained FILM checkpoint running inference on satellite patches (no fine-tuning yet) — confirms the architecture transfers at all before you invest in training.~~ **Done** — 30.7 dB / 0.87 SSIM, well above the Farneback baseline.
-3. **Weeks 6–8**: Fine-tune on satellite triplets; build the IBTrACS-based cyclone/calm evaluation split; get PSNR/SSIM numbers for baseline vs. fine-tuned model on both subsets.
+3. ~~**Weeks 6–8**: Fine-tune on satellite triplets; get PSNR/SSIM numbers for baseline vs. fine-tuned model.~~ **Proof-of-concept done on CPU** (`src/deep/finetune_film.py`, `src/deep/dataset.py`) — 46 real triplets from a contiguous 8-hour GOES-16 window, split chronologically into a 38-triplet fine-tuning pool and an 8-triplet **held-out test set** (excluded from fine-tuning entirely, so the comparison below is fair):
+
+   | Method | PSNR | SSIM |
+   |---|---|---|
+   | Farneback (classical) | 22.6 dB | 0.46 |
+   | FILM, pretrained (zero-shot) | 27.8 dB | 0.80 |
+   | FILM, fine-tuned (5 epochs, 31 train triplets, CPU) | **28.7 dB** | **0.82** |
+
+   Train loss fell steadily (0.0151→0.0140) and val loss too (0.0232→0.0227) — real signal, not noise. This is a small-scale correctness proof, not the final result: 31 training triplets and 5 epochs on CPU is nowhere near enough data/training to claim the real improvement this architecture can deliver. **Remaining for this milestone**: rerun with far more triplets (multiple days/events, not one 8-hour window) and more epochs on a Colab/Kaggle GPU, then build the IBTrACS-based cyclone/calm evaluation split — the stratified calm-vs-cyclone comparison, not this aggregate number, is the actual paper headline result.
 4. **Weeks 9–10**: Ablations — patch size, fine-tuning data volume, single vs. attempting 2x/4x multi-frame interpolation as a stretch.
 5. **Weeks 11–13**: INSAT/MOSDAC validation attempt (if access came through in time), write-up, plots, demo notebook polish.
 
