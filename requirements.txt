@@ -7,3 +7,9 @@ netCDF4
 h5netcdf
 boto3
 tqdm
+requests
+
+# CPU-only PyTorch build -- this project only needs GPU for actual
+# fine-tuning later (done on Colab/Kaggle), not for local pipeline work.
+--extra-index-url https://download.pytorch.org/whl/cpu
+torch
