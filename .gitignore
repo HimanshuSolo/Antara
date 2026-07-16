@@ -7,3 +7,4 @@ data/processed/
 *.ipynb_checkpoints/
 .ipynb_checkpoints/
 lessons/
+models/
