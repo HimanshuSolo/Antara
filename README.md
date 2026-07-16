@@ -25,7 +25,9 @@ on fast, non-linear cloud dynamics.
 - [x] Fine-tuning proof-of-concept on CPU: 28.7 dB / 0.82 SSIM on a held-out test
       set, vs. 27.8 dB / 0.80 SSIM zero-shot on the same set. Small-scale (31
       training triplets, 5 epochs) -- see `docs/PLAN.md` for what's left.
-- [ ] Full fine-tuning run on more data + a Colab/Kaggle GPU — the core contribution.
+- [x] GPU support added to fine-tuning/inference (`--device`, auto-detects cuda).
+- [ ] Full fine-tuning run on more data on a Colab/Kaggle GPU — see
+      `notebooks/finetune_on_colab.ipynb`, ready to run. The core contribution.
 - [ ] Cyclone/calm evaluation split via IBTrACS.
 - [ ] INSAT-3D/3DR validation via MOSDAC (stretch).
 
@@ -78,6 +80,16 @@ python3 -m venv .venv
 # Run tests
 .venv/bin/python -m pytest tests/ -v
 ```
+
+## Scaling up fine-tuning on Colab
+
+`notebooks/finetune_on_colab.ipynb` reuses the same pipeline code above
+(nothing reimplemented) to fine-tune on 3 separate GOES-16 days and
+evaluate on a 4th, fully disjoint day, on a free Colab GPU. Open it in
+Colab via GitHub, enable a GPU runtime, and run top to bottom -- it'll
+prompt for a GitHub personal access token to clone this private repo,
+and saves the fine-tuned checkpoint + result CSVs to Google Drive so
+they survive when the session ends.
 
 ## Layout
 
