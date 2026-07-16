@@ -18,7 +18,7 @@ from src.deep.film_interpolate import interpolate_middle_frame
 from src.eval.metrics import psnr, ssim
 
 
-def evaluate(triplets_dir: Path, model_path: Path, out_csv: Path) -> list[dict]:
+def evaluate(triplets_dir: Path, model_path: Path, out_csv: Path, device: str | None = None) -> list[dict]:
     rows = []
     for triplet_dir in sorted(triplets_dir.iterdir()):
         if not triplet_dir.is_dir():
@@ -29,7 +29,7 @@ def evaluate(triplets_dir: Path, model_path: Path, out_csv: Path) -> list[dict]:
         if frame_prev is None or frame_mid is None or frame_next is None:
             continue
 
-        pred = interpolate_middle_frame(frame_prev, frame_next, model_path)
+        pred = interpolate_middle_frame(frame_prev, frame_next, model_path, device=device)
         rows.append({
             "triplet": triplet_dir.name,
             "psnr": psnr(pred, frame_mid),
@@ -50,9 +50,10 @@ if __name__ == "__main__":
     parser.add_argument("--triplets-dir", default="data/processed/triplets")
     parser.add_argument("--model-path", default="models/film_net_fp32.pt")
     parser.add_argument("--out-csv", default="data/processed/film_results.csv")
+    parser.add_argument("--device", default=None, help="cuda / cpu -- auto-detects if omitted")
     args = parser.parse_args()
 
-    rows = evaluate(Path(args.triplets_dir), Path(args.model_path), Path(args.out_csv))
+    rows = evaluate(Path(args.triplets_dir), Path(args.model_path), Path(args.out_csv), device=args.device)
     if rows:
         avg_psnr = sum(r["psnr"] for r in rows) / len(rows)
         avg_ssim = sum(r["ssim"] for r in rows) / len(rows)
