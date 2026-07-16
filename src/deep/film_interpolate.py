@@ -20,13 +20,13 @@ import torch
 # matching the padding convention used by the original FILM port.
 _ALIGN = 64
 
-_model_cache: dict[str, torch.jit.ScriptModule] = {}
+_model_cache: dict[tuple[str, str], torch.jit.ScriptModule] = {}
 
 
-def _load_model(model_path: Path) -> torch.jit.ScriptModule:
-    key = str(model_path)
+def _load_model(model_path: Path, device: str) -> torch.jit.ScriptModule:
+    key = (str(model_path), device)
     if key not in _model_cache:
-        model = torch.jit.load(key, map_location="cpu")
+        model = torch.jit.load(str(model_path), map_location=device)
         model.eval()
         _model_cache[key] = model
     return _model_cache[key]
@@ -52,17 +52,24 @@ def _to_tensor(gray: np.ndarray) -> tuple[torch.Tensor, tuple[int, int, int, int
     return tensor, crop
 
 
-def interpolate_middle_frame(frame_prev: np.ndarray, frame_next: np.ndarray, model_path: Path) -> np.ndarray:
+def interpolate_middle_frame(
+    frame_prev: np.ndarray,
+    frame_next: np.ndarray,
+    model_path: Path,
+    device: str | None = None,
+) -> np.ndarray:
     """Synthesize the frame halfway between two grayscale satellite patches.
 
     Same (prev, next) -> mid contract as
     `src.baseline.farneback_interpolate.interpolate_middle_frame`, so it
     drops into the same evaluation flow.
     """
-    model = _load_model(model_path)
+    device = device or ("cuda" if torch.cuda.is_available() else "cpu")
+    model = _load_model(model_path, device)
 
     x0, crop = _to_tensor(frame_prev)
     x1, _ = _to_tensor(frame_next)
+    x0, x1 = x0.to(device), x1.to(device)
     dt = x0.new_full((1, 1), 0.5)
 
     with torch.no_grad():
@@ -71,7 +78,7 @@ def interpolate_middle_frame(frame_prev: np.ndarray, frame_next: np.ndarray, mod
     # network output channels aren't guaranteed identical even though the
     # input channels were replicated -- average back down to grayscale
     # rather than just taking one channel.
-    pred = pred[0].mean(dim=0).numpy()
+    pred = pred[0].mean(dim=0).cpu().numpy()
     top, left, bottom, right = crop
     pred = pred[top:bottom, left:right]
     return (pred * 255).astype(np.uint8)
