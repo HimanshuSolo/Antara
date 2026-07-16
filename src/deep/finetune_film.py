@@ -12,12 +12,11 @@ held-out middle frame. The original FILM paper also uses a perceptual
 semester project -- worth calling out explicitly in the report rather
 than silently deviating from the paper.
 
-NOTE ON COMPUTE: this script runs on CPU here to verify the pipeline
-is correct (loss actually decreases, checkpoints save/reload), but a
-real training run over enough data to matter should happen on a
-Colab/Kaggle GPU per docs/PLAN.md -- CPU fine-tuning of a ~34M-parameter
-video model does not scale to the epoch counts/data volume a real result
-needs.
+NOTE ON COMPUTE: auto-detects and uses a GPU if one is available (see
+`--device`) -- a real training run over enough data to matter should
+happen on a Colab/Kaggle GPU per docs/PLAN.md, since CPU fine-tuning of a
+~34M-parameter video model does not scale to the epoch counts/data volume
+a real result needs.
 """
 from __future__ import annotations
 
@@ -39,10 +38,15 @@ def finetune(
     lr: float = 1e-5,
     val_fraction: float = 0.2,
     seed: int = 0,
+    device: str | None = None,
 ) -> dict:
     torch.manual_seed(seed)
 
-    model = torch.jit.load(str(model_path), map_location="cpu")
+    device = device or ("cuda" if torch.cuda.is_available() else "cpu")
+    print(f"Using device: {device}")
+
+    model = torch.jit.load(str(model_path), map_location=device)
+    model.to(device)
 
     dataset = TripletDataset(triplets_dir)
     # A *chronological* split, not torch's random_split: consecutive
@@ -71,6 +75,9 @@ def finetune(
         running_loss = 0.0
         n_batches = 0
         for frame_prev, frame_mid, frame_next in train_loader:
+            frame_prev = frame_prev.to(device)
+            frame_mid = frame_mid.to(device)
+            frame_next = frame_next.to(device)
             dt = frame_prev.new_full((frame_prev.shape[0], 1), 0.5)
 
             optimizer.zero_grad()
@@ -92,6 +99,9 @@ def finetune(
             val_batches = 0
             with torch.no_grad():
                 for frame_prev, frame_mid, frame_next in val_loader:
+                    frame_prev = frame_prev.to(device)
+                    frame_mid = frame_mid.to(device)
+                    frame_next = frame_next.to(device)
                     dt = frame_prev.new_full((frame_prev.shape[0], 1), 0.5)
                     pred = model(frame_prev, frame_next, dt)
                     val_running += torch.nn.functional.l1_loss(pred, frame_mid).item()
@@ -105,6 +115,7 @@ def finetune(
         print(msg)
 
     out_path.parent.mkdir(parents=True, exist_ok=True)
+    model.to("cpu")  # save a checkpoint that loads on any machine, GPU or not
     model.save(str(out_path))
     print(f"Saved fine-tuned checkpoint to {out_path}")
 
@@ -120,6 +131,7 @@ if __name__ == "__main__":
     parser.add_argument("--batch-size", type=int, default=2)
     parser.add_argument("--lr", type=float, default=1e-5)
     parser.add_argument("--val-fraction", type=float, default=0.2)
+    parser.add_argument("--device", default=None, help="cuda / cpu -- auto-detects if omitted")
     args = parser.parse_args()
 
     finetune(
@@ -130,4 +142,5 @@ if __name__ == "__main__":
         batch_size=args.batch_size,
         lr=args.lr,
         val_fraction=args.val_fraction,
+        device=args.device,
     )
