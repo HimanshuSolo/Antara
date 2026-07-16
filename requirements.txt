@@ -1,0 +1,9 @@
+numpy
+opencv-python-headless
+scikit-image
+matplotlib
+xarray
+netCDF4
+h5netcdf
+boto3
+tqdm
