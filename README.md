@@ -1,6 +1,6 @@
 # Antara
 
-*Antara* (अंतर) — Sanskrit/Hindi for "interval" or "the space between" —
+*Antara* (अंतर) — It means "interval" or "the space between" —
 fills the interval between satellite frames.
 
 Enhancing the temporal resolution of geostationary satellite imagery using
