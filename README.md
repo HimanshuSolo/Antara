@@ -1,4 +1,7 @@
-# Satellite Frame Interpolation
+# Antara
+
+*Antara* (अंतर) — Sanskrit/Hindi for "interval" or "the space between" —
+fills the interval between satellite frames.
 
 Enhancing the temporal resolution of geostationary satellite imagery using
 AI/ML techniques based on optical flow — a capstone project targeting the
