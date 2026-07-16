@@ -13,9 +13,10 @@ This framing is deliberately chosen to satisfy the earlier stated constraints (C
 Classical optical-flow interpolation: compute dense flow with Farneback (OpenCV, `cv2.calcOpticalFlowFarneback`) between frame t-1 and t+1, then warp/blend at t=0.5 to synthesize the middle frame. This is fast to implement and gives you the "traditional method" reference the problem statement explicitly calls out as inadequate.
 
 ### 2. Deep optical-flow interpolation (the core contribution)
-Replace Farneback with a **pretrained deep optical-flow model** (RAFT, available via `torchvision.models.optical_flow.raft_large`, pretrained on Sintel/KITTI/FlyingChairs) to estimate flow between t-1 and t+1, then use a small learned **synthesis/refinement network** to warp + blend + fix occlusion artifacts (holes where content appears/disappears) — this mirrors the architecture used by Super-SloMo / DAIN / RIFE. Practically:
-- Start from a pretrained frame-interpolation model checkpoint (RIFE — repo `hzwer/ECCV2022-RIFE` — or Google's FILM) rather than building the flow+synthesis pipeline from scratch.
-- **Fine-tune** that pretrained model on satellite imagery triplets. This is the key move that makes free-tier compute feasible — you're adapting an existing strong prior to a new visual domain (clouds/weather), not training flow estimation + synthesis from zero.
+Replace Farneback with a **pretrained deep frame-interpolation model** to estimate flow between t-1 and t+1 and *learn* how to blend/repair the warped result — this mirrors the architecture used by Super-SloMo / DAIN / RIFE / FILM. Practically:
+- **Model: Google's FILM**, via the TorchScript port at `dajes/frame-interpolation-pytorch` (self-contained `.pt` checkpoint, architecture + weights together). **RIFE was tried first and dropped**: its practical/HD checkpoints (the ones every tool actually uses) ship as Python-3.7-only compiled bytecode with no source available anywhere, which blocks both loading on a modern interpreter and, more importantly, the fine-tuning this project needs to do later. FILM has no such issue and is at least as strong a pretrained baseline.
+- **Verified**: running the pretrained FILM checkpoint as-is (zero satellite-specific training) on our real GOES-16 test triplets already gives **30.7 dB PSNR / 0.87 SSIM**, vs. the Farneback baseline's 24.4 dB / 0.57 SSIM — confirms the architecture transfers to satellite imagery before any fine-tuning investment (`src/deep/film_interpolate.py`, `src/eval/evaluate_film.py`).
+- **Fine-tune** that pretrained model on satellite imagery triplets next. This is the key move that makes free-tier compute feasible — you're adapting an existing strong prior to a new visual domain (clouds/weather), not training flow estimation + synthesis from zero.
 
 ### 3. Why this is self-supervised (no labeling cost)
 Training data is just real triplets `(frame_{t-1}, frame_t, frame_{t+1})` pulled straight from the satellite archive — `frame_t` is the "label," held out during inference and used only to compute the loss during training. No manual annotation needed anywhere in this project.
@@ -33,8 +34,8 @@ Training data is just real triplets `(frame_{t-1}, frame_t, frame_{t+1})` pulled
 - Qualitative side-by-sides (real t-1, generated t, real t+1, ground-truth-t) — especially on cyclone frames — for the report/demo.
 
 ## Suggested semester timeline
-1. **Weeks 1–2**: Data pipeline — pull GOES/Himawari triplets from AWS Open Data, build patch extraction, implement the Farneback baseline end-to-end.
-2. **Weeks 3–5**: Get a pretrained RIFE/FILM checkpoint running inference on satellite patches (no fine-tuning yet) — confirms the architecture transfers at all before you invest in training.
+1. ~~**Weeks 1–2**: Data pipeline — pull GOES/Himawari triplets from AWS Open Data, build patch extraction, implement the Farneback baseline end-to-end.~~ **Done.**
+2. ~~**Weeks 3–5**: Get a pretrained FILM checkpoint running inference on satellite patches (no fine-tuning yet) — confirms the architecture transfers at all before you invest in training.~~ **Done** — 30.7 dB / 0.87 SSIM, well above the Farneback baseline.
 3. **Weeks 6–8**: Fine-tune on satellite triplets; build the IBTrACS-based cyclone/calm evaluation split; get PSNR/SSIM numbers for baseline vs. fine-tuned model on both subsets.
 4. **Weeks 9–10**: Ablations — patch size, fine-tuning data volume, single vs. attempting 2x/4x multi-frame interpolation as a stretch.
 5. **Weeks 11–13**: INSAT/MOSDAC validation attempt (if access came through in time), write-up, plots, demo notebook polish.
