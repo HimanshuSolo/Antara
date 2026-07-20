@@ -54,6 +54,34 @@ def _to_tensor(gray: np.ndarray) -> tuple[torch.Tensor, tuple[int, int, int, int
     return tensor, crop
 
 
+def _prepare_inputs(
+    frame_prev: np.ndarray, frame_next: np.ndarray, model_path: Path, device: str | None
+) -> tuple[torch.jit.ScriptModule, torch.Tensor, torch.Tensor, tuple[int, int, int, int]]:
+    device = device or ("cuda" if torch.cuda.is_available() else "cpu")
+    model = _load_model(model_path, device)
+
+    x0, crop = _to_tensor(frame_prev)
+    x1, _ = _to_tensor(frame_next)
+    x0, x1 = x0.to(device), x1.to(device)
+    return model, x0, x1, crop
+
+
+def _run_model(
+    model: torch.jit.ScriptModule, x0: torch.Tensor, x1: torch.Tensor, t: float, crop: tuple[int, int, int, int]
+) -> np.ndarray:
+    dt = x0.new_full((1, 1), t)
+    with torch.no_grad():
+        pred = model(x0, x1, dt).clamp(0, 1)
+
+    # network output channels aren't guaranteed identical even though the
+    # input channels were replicated -- average back down to grayscale
+    # rather than just taking one channel.
+    pred = pred[0].mean(dim=0).cpu().numpy()
+    top, left, bottom, right = crop
+    pred = pred[top:bottom, left:right]
+    return (pred * 255).astype(np.uint8)
+
+
 def interpolate_at(
     frame_prev: np.ndarray,
     frame_next: np.ndarray,
@@ -70,24 +98,8 @@ def interpolate_at(
     if not 0.0 < t < 1.0:
         raise ValueError(f"t must be strictly between 0 and 1, got {t}")
 
-    device = device or ("cuda" if torch.cuda.is_available() else "cpu")
-    model = _load_model(model_path, device)
-
-    x0, crop = _to_tensor(frame_prev)
-    x1, _ = _to_tensor(frame_next)
-    x0, x1 = x0.to(device), x1.to(device)
-    dt = x0.new_full((1, 1), t)
-
-    with torch.no_grad():
-        pred = model(x0, x1, dt).clamp(0, 1)
-
-    # network output channels aren't guaranteed identical even though the
-    # input channels were replicated -- average back down to grayscale
-    # rather than just taking one channel.
-    pred = pred[0].mean(dim=0).cpu().numpy()
-    top, left, bottom, right = crop
-    pred = pred[top:bottom, left:right]
-    return (pred * 255).astype(np.uint8)
+    model, x0, x1, crop = _prepare_inputs(frame_prev, frame_next, model_path, device)
+    return _run_model(model, x0, x1, t, crop)
 
 
 def interpolate_middle_frame(
@@ -116,8 +128,9 @@ def interpolate_multi(
     num_frames=3 gives frames at t=0.25/0.5/0.75, turning one real frame
     gap into 4x the temporal resolution instead of FILM's usual single
     midpoint. Per docs/PLAN.md's multi-frame stretch goal.
+
+    Prepares the input tensors once and reuses them across every t --
+    frame_prev/frame_next don't change between frames, only dt does.
     """
-    return [
-        interpolate_at(frame_prev, frame_next, model_path, i / (num_frames + 1), device=device)
-        for i in range(1, num_frames + 1)
-    ]
+    model, x0, x1, crop = _prepare_inputs(frame_prev, frame_next, model_path, device)
+    return [_run_model(model, x0, x1, i / (num_frames + 1), crop) for i in range(1, num_frames + 1)]
