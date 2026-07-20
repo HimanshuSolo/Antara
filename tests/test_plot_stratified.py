@@ -1,6 +1,8 @@
 import csv
 from pathlib import Path
 
+import pytest
+
 from src.eval.plot_stratified import build_stratified_figure, load_stratified_means, save_stratified_figure
 
 
@@ -30,10 +32,10 @@ def test_load_stratified_means_averages_each_csv(tmp_path):
 
     means = load_stratified_means(tmp_path)
 
-    assert means["calm"]["farneback"] == (22.0, 0.6, 0.3)
-    assert means["calm"]["film"] == (30.0, 0.9, 0.1)
-    assert means["cyclone"]["farneback"] == (10.0, 0.2, 0.6)
-    assert means["cyclone"]["film"] == (28.0, 0.85, 0.15)
+    assert means["calm"]["farneback"] == pytest.approx((22.0, 0.6, 0.3))
+    assert means["calm"]["film"] == pytest.approx((30.0, 0.9, 0.1))
+    assert means["cyclone"]["farneback"] == pytest.approx((10.0, 0.2, 0.6))
+    assert means["cyclone"]["film"] == pytest.approx((28.0, 0.85, 0.15))
 
 
 def test_load_stratified_means_missing_csv_is_nan(tmp_path):
