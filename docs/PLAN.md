@@ -29,7 +29,7 @@ Training data is just real triplets `(frame_{t-1}, frame_t, frame_{t+1})` pulled
 - Work on **cropped patches** (e.g. 256–512px around events of interest), not full-disk frames, to keep fine-tuning and inference feasible on a free Colab/Kaggle T4.
 
 ## Evaluation (this produces your paper's headline result)
-- Standard interpolation metrics: **PSNR, SSIM**, optionally **LPIPS** (perceptual) between the generated middle frame and the real held-out middle frame.
+- ~~Standard interpolation metrics: **PSNR, SSIM**, optionally **LPIPS** (perceptual) between the generated middle frame and the real held-out middle frame.~~ **Done** — `src/eval/metrics.py` now reports all three; `evaluate_baseline.py`, `evaluate_film.py`, `evaluate_stratified.py`, and `plot_stratified.py` all carry LPIPS alongside PSNR/SSIM.
 - **Stratify results into two subsets**: calm/slow-moving weather vs. cyclone/storm (fast, non-linear) windows from the IBTrACS-curated set. The core result is a table/plot showing classical Farneback degrading sharply on the fast/non-linear subset while the fine-tuned deep model holds up — this stratified comparison IS the novelty contribution.
 - Qualitative side-by-sides (real t-1, generated t, real t+1, ground-truth-t) — especially on cyclone frames — for the report/demo.
 
