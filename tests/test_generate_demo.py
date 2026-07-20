@@ -14,8 +14,8 @@ def test_build_demo_html_embeds_images_metrics_and_slider():
         triplet_name="triplet_0000",
         farneback_b64="AAAA",
         film_b64="BBBB",
-        farneback_metrics=(20.0, 0.5),
-        film_metrics=(30.0, 0.9),
+        farneback_metrics=(20.0, 0.5, 0.3),
+        film_metrics=(30.0, 0.9, 0.1),
     )
 
     assert "triplet_0000" in html
@@ -23,6 +23,8 @@ def test_build_demo_html_embeds_images_metrics_and_slider():
     assert "BBBB" in html
     assert "20.0" in html
     assert "30.0" in html
+    assert "0.30" in html
+    assert "0.10" in html
     assert '<input type="range"' in html
 
 
