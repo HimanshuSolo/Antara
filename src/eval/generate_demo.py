@@ -17,7 +17,7 @@ import numpy as np
 
 from src.baseline.farneback_interpolate import interpolate_middle_frame as farneback_interpolate
 from src.deep.film_interpolate import interpolate_middle_frame as film_interpolate
-from src.eval.metrics import psnr, ssim
+from src.eval.metrics import lpips_distance, psnr, ssim
 from src.eval.plot_comparison import list_triplet_dirs, load_triplet
 
 
@@ -32,11 +32,11 @@ def build_demo_html(
     triplet_name: str,
     farneback_b64: str,
     film_b64: str,
-    farneback_metrics: tuple[float, float],
-    film_metrics: tuple[float, float],
+    farneback_metrics: tuple[float, float, float],
+    film_metrics: tuple[float, float, float],
 ) -> str:
-    farneback_psnr, farneback_ssim = farneback_metrics
-    film_psnr, film_ssim = film_metrics
+    farneback_psnr, farneback_ssim, farneback_lpips = farneback_metrics
+    film_psnr, film_ssim, film_lpips = film_metrics
     return f"""<!doctype html>
 <html>
 <head>
@@ -62,8 +62,8 @@ def build_demo_html(
   </div>
   <input type="range" min="0" max="100" value="50" id="slider">
   <p class="caption">
-    Left of the slider: Farneback (PSNR {farneback_psnr:.1f} dB / SSIM {farneback_ssim:.2f}) --
-    right: FILM (PSNR {film_psnr:.1f} dB / SSIM {film_ssim:.2f})
+    Left of the slider: Farneback (PSNR {farneback_psnr:.1f} dB / SSIM {farneback_ssim:.2f} / LPIPS {farneback_lpips:.2f}) --
+    right: FILM (PSNR {film_psnr:.1f} dB / SSIM {film_ssim:.2f} / LPIPS {film_lpips:.2f})
   </p>
   <script>
     const container = document.getElementById("container");
@@ -97,8 +97,8 @@ def build_demo_for_triplet(triplet_dir: Path, film_model_path: Path, device: str
         triplet_dir.name,
         encode_png(farneback_pred),
         encode_png(film_pred),
-        (psnr(farneback_pred, frame_mid), ssim(farneback_pred, frame_mid)),
-        (psnr(film_pred, frame_mid), ssim(film_pred, frame_mid)),
+        (psnr(farneback_pred, frame_mid), ssim(farneback_pred, frame_mid), lpips_distance(farneback_pred, frame_mid)),
+        (psnr(film_pred, frame_mid), ssim(film_pred, frame_mid), lpips_distance(film_pred, frame_mid)),
     )
 
 
