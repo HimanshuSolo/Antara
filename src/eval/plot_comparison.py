@@ -22,7 +22,7 @@ from src.deep.film_interpolate import interpolate_middle_frame as film_interpola
 from src.eval.metrics import lpips_distance, psnr, ssim
 
 
-def _load_triplet(triplet_dir: Path) -> tuple:
+def load_triplet(triplet_dir: Path) -> tuple:
     frame_prev = cv2.imread(str(triplet_dir / "t-1.png"), cv2.IMREAD_GRAYSCALE)
     frame_mid = cv2.imread(str(triplet_dir / "t.png"), cv2.IMREAD_GRAYSCALE)
     frame_next = cv2.imread(str(triplet_dir / "t+1.png"), cv2.IMREAD_GRAYSCALE)
@@ -34,7 +34,7 @@ def _load_triplet(triplet_dir: Path) -> tuple:
 def build_comparison_figure(
     triplet_dir: Path, film_model_path: Path, device: str | None = None
 ) -> plt.Figure:
-    frame_prev, frame_mid, frame_next = _load_triplet(triplet_dir)
+    frame_prev, frame_mid, frame_next = load_triplet(triplet_dir)
 
     farneback_pred = farneback_interpolate(frame_prev, frame_next)
     film_pred = film_interpolate(frame_prev, frame_next, film_model_path, device=device)
