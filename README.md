@@ -48,6 +48,23 @@ on fast, non-linear cloud dynamics.
       degrade-sharply-vs-hold-up split the ISRO problem statement predicts.
       Same caveat as the fine-tuning result above: small-scale checkpoint,
       not yet the full Colab GPU run.
+- [x] Patch-size ablation (`src/eval/ablate_patch_size.py`), run on 46 real
+      GOES-16 triplets at 128/256/512px against the pretrained checkpoint:
+
+      | Size | Method     | PSNR    | SSIM   | LPIPS  |
+      |------|------------|---------|--------|--------|
+      | 128  | Farneback  | 22.80 dB | 0.537 | 0.181 |
+      | 128  | FILM       | 31.60 dB | 0.886 | 0.062 |
+      | 256  | Farneback  | 23.73 dB | 0.558 | 0.186 |
+      | 256  | FILM       | 31.53 dB | 0.875 | 0.084 |
+      | 512  | Farneback  | 24.65 dB | 0.602 | 0.184 |
+      | 512  | FILM       | 31.89 dB | 0.886 | 0.090 |
+
+      FILM's PSNR/SSIM barely move across a 16x range in patch area (128px
+      to 512px) — it isn't relying on extra spatial context. Farneback
+      improves somewhat with more context (22.8 → 24.65 dB), consistent
+      with its pyramidal flow estimation benefiting from a larger search
+      window, but still stays well below FILM at every size.
 - [ ] INSAT-3D/3DR validation via MOSDAC (stretch).
 
 See the full plan and rationale for each step at
