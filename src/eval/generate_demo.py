@@ -18,7 +18,7 @@ import numpy as np
 from src.baseline.farneback_interpolate import interpolate_middle_frame as farneback_interpolate
 from src.deep.film_interpolate import interpolate_middle_frame as film_interpolate
 from src.eval.metrics import psnr, ssim
-from src.eval.plot_comparison import load_triplet
+from src.eval.plot_comparison import list_triplet_dirs, load_triplet
 
 
 def encode_png(img: np.ndarray) -> str:
@@ -118,11 +118,8 @@ def save_demos(
 ) -> list[Path]:
     out_dir.mkdir(parents=True, exist_ok=True)
     written = []
-    triplet_dirs = sorted(p for p in triplets_dir.iterdir() if p.is_dir())
-    if limit is not None:
-        triplet_dirs = triplet_dirs[:limit]
 
-    for triplet_dir in triplet_dirs:
+    for triplet_dir in list_triplet_dirs(triplets_dir, limit=limit):
         out_path = out_dir / f"{triplet_dir.name}.html"
         write_demo(triplet_dir, film_model_path, out_path, device=device)
         written.append(out_path)
