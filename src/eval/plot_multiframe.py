@@ -20,7 +20,7 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
 from src.deep.film_interpolate import interpolate_multi
-from src.eval.plot_comparison import load_triplet
+from src.eval.plot_comparison import list_triplet_dirs, load_triplet
 
 
 def build_multiframe_figure(
@@ -58,11 +58,8 @@ def save_multiframe(
 ) -> list[Path]:
     out_dir.mkdir(parents=True, exist_ok=True)
     written = []
-    triplet_dirs = sorted(p for p in triplets_dir.iterdir() if p.is_dir())
-    if limit is not None:
-        triplet_dirs = triplet_dirs[:limit]
 
-    for triplet_dir in triplet_dirs:
+    for triplet_dir in list_triplet_dirs(triplets_dir, limit=limit):
         fig = build_multiframe_figure(triplet_dir, film_model_path, num_frames=num_frames, device=device)
         out_path = out_dir / f"{triplet_dir.name}_multiframe.png"
         fig.savefig(out_path, dpi=150)
