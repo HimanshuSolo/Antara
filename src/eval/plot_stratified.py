@@ -21,29 +21,30 @@ SUBSETS = ["calm", "cyclone"]
 METHODS = ["farneback", "film"]
 
 
-def _read_csv_means(csv_path: Path) -> tuple[float, float]:
+def _read_csv_means(csv_path: Path) -> tuple[float, float, float]:
     if not csv_path.exists():
-        return float("nan"), float("nan")
+        return float("nan"), float("nan"), float("nan")
     with csv_path.open(newline="") as f:
         rows = list(csv.DictReader(f))
     if not rows:
-        return float("nan"), float("nan")
+        return float("nan"), float("nan"), float("nan")
     mean_psnr = sum(float(r["psnr"]) for r in rows) / len(rows)
     mean_ssim = sum(float(r["ssim"]) for r in rows) / len(rows)
-    return mean_psnr, mean_ssim
+    mean_lpips = sum(float(r["lpips"]) for r in rows) / len(rows)
+    return mean_psnr, mean_ssim, mean_lpips
 
 
-def load_stratified_means(results_dir: Path) -> dict[str, dict[str, tuple[float, float]]]:
+def load_stratified_means(results_dir: Path) -> dict[str, dict[str, tuple[float, float, float]]]:
     """Reload the {subset}_{method}.csv files evaluate_stratified.py writes
-    and average PSNR/SSIM per (subset, method) cell."""
+    and average PSNR/SSIM/LPIPS per (subset, method) cell."""
     return {
         subset: {method: _read_csv_means(results_dir / f"{subset}_{method}.csv") for method in METHODS}
         for subset in SUBSETS
     }
 
 
-def build_stratified_figure(means: dict[str, dict[str, tuple[float, float]]]) -> plt.Figure:
-    fig, (ax_psnr, ax_ssim) = plt.subplots(1, 2, figsize=(10, 4))
+def build_stratified_figure(means: dict[str, dict[str, tuple[float, float, float]]]) -> plt.Figure:
+    fig, (ax_psnr, ax_ssim, ax_lpips) = plt.subplots(1, 3, figsize=(14, 4))
     x = np.arange(len(SUBSETS))
     width = 0.35
 
@@ -51,12 +52,15 @@ def build_stratified_figure(means: dict[str, dict[str, tuple[float, float]]]) ->
         offset = (i - 0.5) * width
         psnr_vals = [means[subset][method][0] for subset in SUBSETS]
         ssim_vals = [means[subset][method][1] for subset in SUBSETS]
+        lpips_vals = [means[subset][method][2] for subset in SUBSETS]
         ax_psnr.bar(x + offset, psnr_vals, width, label=method)
         ax_ssim.bar(x + offset, ssim_vals, width, label=method)
+        ax_lpips.bar(x + offset, lpips_vals, width, label=method)
 
     ax_psnr.set_title("PSNR (dB)")
     ax_ssim.set_title("SSIM")
-    for ax in (ax_psnr, ax_ssim):
+    ax_lpips.set_title("LPIPS (lower is better)")
+    for ax in (ax_psnr, ax_ssim, ax_lpips):
         ax.set_xticks(x)
         ax.set_xticklabels(SUBSETS)
         ax.legend()
