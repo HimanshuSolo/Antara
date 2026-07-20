@@ -33,7 +33,21 @@ on fast, non-linear cloud dynamics.
       it; `build_calm_dataset.py` pulls the same geographic crop from an
       off-season window; `evaluate_stratified.py` runs Farneback + FILM over
       both and reports PSNR/SSIM/LPIPS per subset — the project's headline
-      comparison.
+      comparison. Run against the small-scale fine-tuned checkpoint (52 calm
+      / 28 cyclone triplets):
+
+      | Subset  | Method     | PSNR    | SSIM   | LPIPS  |
+      |---------|------------|---------|--------|--------|
+      | calm    | Farneback  | 31.44 dB | 0.823 | 0.103 |
+      | calm    | FILM       | 36.88 dB | 0.917 | 0.041 |
+      | cyclone | Farneback  | 24.98 dB | 0.729 | 0.125 |
+      | cyclone | FILM       | 32.05 dB | 0.932 | 0.044 |
+
+      Farneback drops 6.46 dB PSNR going from calm to cyclone conditions;
+      FILM drops only 4.83 dB and its SSIM/LPIPS barely move — the
+      degrade-sharply-vs-hold-up split the ISRO problem statement predicts.
+      Same caveat as the fine-tuning result above: small-scale checkpoint,
+      not yet the full Colab GPU run.
 - [ ] INSAT-3D/3DR validation via MOSDAC (stretch).
 
 See the full plan and rationale for each step at
