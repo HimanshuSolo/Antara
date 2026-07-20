@@ -27,5 +27,14 @@ jobs:
       - name: Install dependencies
         run: pip install -r requirements.txt
 
+      - name: Cache FILM checkpoint
+        uses: actions/cache@v4
+        with:
+          path: models/film_net_fp32.pt
+          key: film-checkpoint-${{ hashFiles('src/deep/download_film.py') }}
+
+      - name: Download FILM checkpoint
+        run: python -m src.deep.download_film
+
       - name: Run tests
         run: python -m pytest tests/ -v
