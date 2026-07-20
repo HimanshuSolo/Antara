@@ -10,7 +10,7 @@ from pathlib import Path
 import cv2
 
 from src.baseline.farneback_interpolate import interpolate_middle_frame
-from src.eval.metrics import lpips_distance, psnr, ssim
+from src.eval.metrics import lpips_distance, psnr, ssim, summarize
 
 
 def evaluate(triplets_dir: Path, out_csv: Path) -> list[dict]:
@@ -49,9 +49,7 @@ if __name__ == "__main__":
 
     rows = evaluate(Path(args.triplets_dir), Path(args.out_csv))
     if rows:
-        avg_psnr = sum(r["psnr"] for r in rows) / len(rows)
-        avg_ssim = sum(r["ssim"] for r in rows) / len(rows)
-        avg_lpips = sum(r["lpips"] for r in rows) / len(rows)
+        avg_psnr, avg_ssim, avg_lpips = summarize(rows)
         print(f"Evaluated {len(rows)} triplets")
         print(f"Mean PSNR: {avg_psnr:.2f} dB")
         print(f"Mean SSIM: {avg_ssim:.4f}")
