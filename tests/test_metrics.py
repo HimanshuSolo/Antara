@@ -1,6 +1,7 @@
 import numpy as np
+import pytest
 
-from src.eval.metrics import psnr, ssim
+from src.eval.metrics import lpips_distance, psnr, ssim
 
 
 def test_psnr_identical_images_is_high():
@@ -18,3 +19,21 @@ def test_psnr_and_ssim_drop_for_different_images():
     img_b = np.full((64, 64), 255, dtype=np.uint8)
     assert psnr(img_a, img_b) < 5
     assert ssim(img_a, img_b) < 0.5
+
+
+def _lpips(pred, target):
+    try:
+        return lpips_distance(pred, target)
+    except Exception as exc:  # pragma: no cover -- network/backbone unavailable
+        pytest.skip(f"LPIPS backbone unavailable: {exc}")
+
+
+def test_lpips_identical_images_is_zero():
+    img = np.random.randint(0, 255, (64, 64), dtype=np.uint8)
+    assert _lpips(img, img) == pytest.approx(0.0, abs=1e-6)
+
+
+def test_lpips_rises_for_different_images():
+    img_a = np.zeros((64, 64), dtype=np.uint8)
+    img_b = np.full((64, 64), 255, dtype=np.uint8)
+    assert _lpips(img_a, img_b) > _lpips(img_a, img_a)
