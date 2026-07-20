@@ -117,6 +117,18 @@ python3 -m venv .venv
 #     the deliverable this fills in)
 .venv/bin/python -m src.eval.generate_report
 
+# 11. Fine-tuning data-volume ablation: fine-tune on increasing triplet
+#     counts from the same pool, evaluate every checkpoint on the same
+#     held-out test set
+.venv/bin/python -m src.deep.ablate_finetune_data \
+  --model-path models/film_net_fp32.pt --triplets-finetune-dir data/processed/triplets_finetune \
+  --triplets-test-dir data/processed/triplets_test --counts 8 16 24 31
+
+# 12. Interactive demo: a single self-contained HTML page with a
+#     before/after slider comparing Farneback vs. FILM on one triplet
+.venv/bin/python -m src.eval.generate_demo \
+  --triplet-dir data/processed/triplets_cyclone/triplet_0000 --film-model-path models/film_net_finetuned.pt
+
 # Run tests
 .venv/bin/python -m pytest tests/ -v
 ```
@@ -146,6 +158,7 @@ src/
               film_interpolate.py  — deep frame interpolation (FILM)
               dataset.py           — PyTorch Dataset over triplet directories
               finetune_film.py     — fine-tune FILM on satellite triplets
+              ablate_finetune_data.py — fine-tune on increasing triplet counts, evaluate each checkpoint
   eval/       metrics.py               — PSNR/SSIM/LPIPS
               evaluate_baseline.py     — run Farneback baseline over all triplets
               evaluate_film.py         — run FILM (pretrained or fine-tuned) over all triplets
@@ -154,6 +167,7 @@ src/
               plot_comparison.py       — qualitative side-by-side panels per triplet
               ablate_patch_size.py     — Farneback/FILM at several patch sizes
               generate_report.py       — assemble the results table + figures into a report skeleton
+              generate_demo.py         — self-contained before/after slider demo (one triplet)
 tests/        unit tests for metrics, baseline, FILM interpolation, and the data pipeline
 ```
 
