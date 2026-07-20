@@ -87,6 +87,12 @@ python3 -m venv .venv
 .venv/bin/python -m src.data.build_calm_dataset
 .venv/bin/python -m src.eval.evaluate_stratified --film-model-path models/film_net_finetuned.pt
 
+# 8. Render the report figures: the calm-vs-cyclone bar chart and per-triplet
+#    qualitative side-by-sides
+.venv/bin/python -m src.eval.plot_stratified
+.venv/bin/python -m src.eval.plot_comparison \
+  --triplets-dir data/processed/triplets_cyclone --film-model-path models/film_net_finetuned.pt
+
 # Run tests
 .venv/bin/python -m pytest tests/ -v
 ```
@@ -120,6 +126,8 @@ src/
               evaluate_baseline.py     — run Farneback baseline over all triplets
               evaluate_film.py         — run FILM (pretrained or fine-tuned) over all triplets
               evaluate_stratified.py   — Farneback + FILM, calm vs. cyclone subsets
+              plot_stratified.py       — bar chart: PSNR/SSIM, calm vs. cyclone
+              plot_comparison.py       — qualitative side-by-side panels per triplet
 tests/        unit tests for metrics, baseline, FILM interpolation, and the data pipeline
 ```
 

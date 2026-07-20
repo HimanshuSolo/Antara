@@ -57,6 +57,6 @@ Training data is just real triplets `(frame_{t-1}, frame_t, frame_{t+1})` pulled
 
 ## Deliverable / verification
 - Reproducible Colab/Kaggle notebook (pinned versions, fixed seeds) + small repo.
-- Core plot: PSNR/SSIM, baseline vs. fine-tuned model, split by calm vs. cyclone subset.
-- Qualitative frame comparisons on 2–3 named cyclone events.
+- ~~Core plot: PSNR/SSIM, baseline vs. fine-tuned model, split by calm vs. cyclone subset.~~ **Script done** — `src/eval/plot_stratified.py` renders it from `evaluate_stratified.py`'s output CSVs. Still needs a real run against the full-scale fine-tuned checkpoint once the Colab GPU run lands.
+- ~~Qualitative frame comparisons on 2–3 named cyclone events.~~ **Script done** — `src/eval/plot_comparison.py` renders real t-1/t+1, ground-truth t, and the Farneback/FILM predictions side by side with PSNR/SSIM in the titles. Same caveat: needs real cyclone triplets and the full-scale checkpoint to produce the actual report figures.
 - 4–6 page paper-style report (Problem, Related Work — video frame interpolation + remote sensing, Method, Experiments, Results, Conclusion), explicitly framed against the ISRO problem statement.
