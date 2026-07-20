@@ -14,12 +14,13 @@ from src.eval.evaluate_baseline import evaluate as evaluate_baseline
 from src.eval.evaluate_film import evaluate as evaluate_film
 
 
-def summarize(rows: list[dict]) -> tuple[float, float]:
+def summarize(rows: list[dict]) -> tuple[float, float, float]:
     if not rows:
-        return float("nan"), float("nan")
+        return float("nan"), float("nan"), float("nan")
     mean_psnr = sum(r["psnr"] for r in rows) / len(rows)
     mean_ssim = sum(r["ssim"] for r in rows) / len(rows)
-    return mean_psnr, mean_ssim
+    mean_lpips = sum(r["lpips"] for r in rows) / len(rows)
+    return mean_psnr, mean_ssim, mean_lpips
 
 
 def run_stratified(
@@ -29,7 +30,7 @@ def run_stratified(
     out_dir: Path,
 ) -> dict:
     out_dir.mkdir(parents=True, exist_ok=True)
-    results: dict[str, dict[str, tuple[float, float]]] = {}
+    results: dict[str, dict[str, tuple[float, float, float]]] = {}
 
     for subset_name, triplets_dir in [("calm", calm_dir), ("cyclone", cyclone_dir)]:
         if not triplets_dir.exists() or not any(triplets_dir.iterdir()):
@@ -44,11 +45,11 @@ def run_stratified(
             "film": summarize(film_rows),
         }
 
-    print(f"\n{'subset':10s} {'method':12s} {'PSNR':>8s} {'SSIM':>8s}")
-    print("-" * 42)
+    print(f"\n{'subset':10s} {'method':12s} {'PSNR':>8s} {'SSIM':>8s} {'LPIPS':>8s}")
+    print("-" * 51)
     for subset_name, methods in results.items():
-        for method_name, (mean_psnr, mean_ssim) in methods.items():
-            print(f"{subset_name:10s} {method_name:12s} {mean_psnr:8.2f} {mean_ssim:8.4f}")
+        for method_name, (mean_psnr, mean_ssim, mean_lpips) in methods.items():
+            print(f"{subset_name:10s} {method_name:12s} {mean_psnr:8.2f} {mean_ssim:8.4f} {mean_lpips:8.4f}")
 
     return results
 
