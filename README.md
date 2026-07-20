@@ -65,6 +65,17 @@ on fast, non-linear cloud dynamics.
       improves somewhat with more context (22.8 → 24.65 dB), consistent
       with its pyramidal flow estimation benefiting from a larger search
       window, but still stays well below FILM at every size.
+- [x] Multi-frame interpolation (stretch): `interpolate_multi()` in
+      `src/deep/film_interpolate.py` generalizes FILM inference to any
+      normalized time `t` (it's a continuous-time interpolator, not just a
+      midpoint one) and calls it at N evenly-spaced points, turning one
+      real frame gap into Nx the temporal resolution.
+      `src/eval/plot_multiframe.py` renders the qualitative panel; run for
+      real on a cyclone triplet at 3x (t=0.25/0.5/0.75) — the eye and
+      cloud bands progress smoothly across all 5 frames. Qualitative only:
+      this dataset has ground truth solely at the true midpoint, so only
+      the num_frames=1 case is quantitatively checkable (that's what
+      `evaluate_film.py` already does).
 - [ ] INSAT-3D/3DR validation via MOSDAC (stretch).
 
 See the full plan and rationale for each step at
@@ -146,6 +157,11 @@ python3 -m venv .venv
 .venv/bin/python -m src.eval.generate_demo \
   --triplet-dir data/processed/triplets_cyclone/triplet_0000 --film-model-path models/film_net_finetuned.pt
 
+# 13. Multi-frame interpolation (stretch): N evenly-spaced synthesized
+#     frames instead of just the midpoint, qualitative only
+.venv/bin/python -m src.eval.plot_multiframe \
+  --triplets-dir data/processed/triplets_cyclone --film-model-path models/film_net_finetuned.pt --num-frames 3
+
 # Run tests
 .venv/bin/python -m pytest tests/ -v
 ```
@@ -182,6 +198,7 @@ src/
               evaluate_stratified.py   — Farneback + FILM, calm vs. cyclone subsets
               plot_stratified.py       — bar chart: PSNR/SSIM/LPIPS, calm vs. cyclone
               plot_comparison.py       — qualitative side-by-side panels per triplet
+              plot_multiframe.py       — Nx multi-frame interpolation panel (stretch)
               ablate_patch_size.py     — Farneback/FILM at several patch sizes
               generate_report.py       — assemble the results table + figures into a report skeleton
               generate_demo.py         — self-contained before/after slider demo (one triplet)
