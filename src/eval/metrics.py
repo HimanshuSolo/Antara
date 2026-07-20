@@ -8,6 +8,8 @@ import numpy as np
 import torch
 from skimage.metrics import peak_signal_noise_ratio, structural_similarity
 
+from src.utils.image import replicate_to_rgb01
+
 
 def psnr(pred: np.ndarray, target: np.ndarray) -> float:
     return peak_signal_noise_ratio(target, pred, data_range=255)
@@ -29,9 +31,8 @@ def _get_lpips_model() -> lpips.LPIPS:
 
 
 def _to_lpips_tensor(gray: np.ndarray) -> torch.Tensor:
-    # LPIPS' AlexNet backbone expects 3-channel input in [-1, 1] --
-    # replicate the single IR channel, same trick as FILM's _to_tensor.
-    rgb = np.repeat(gray[:, :, None], 3, axis=2).astype(np.float32) / 255.0
+    # LPIPS' AlexNet backbone expects 3-channel input in [-1, 1].
+    rgb = replicate_to_rgb01(gray)
     tensor = torch.from_numpy(rgb).permute(2, 0, 1).unsqueeze(0)
     return tensor * 2 - 1
 
