@@ -112,6 +112,11 @@ python3 -m venv .venv
 .venv/bin/python -m src.eval.ablate_patch_size \
   --raw-dir data/raw --sizes 128 256 512 --film-model-path models/film_net_finetuned.pt
 
+# 10. Assemble the results table and figures from the above into a report
+#     skeleton (narrative sections left as TODOs -- see docs/PLAN.md for
+#     the deliverable this fills in)
+.venv/bin/python -m src.eval.generate_report
+
 # Run tests
 .venv/bin/python -m pytest tests/ -v
 ```
@@ -148,6 +153,7 @@ src/
               plot_stratified.py       — bar chart: PSNR/SSIM/LPIPS, calm vs. cyclone
               plot_comparison.py       — qualitative side-by-side panels per triplet
               ablate_patch_size.py     — Farneback/FILM at several patch sizes
+              generate_report.py       — assemble the results table + figures into a report skeleton
 tests/        unit tests for metrics, baseline, FILM interpolation, and the data pipeline
 ```
 
