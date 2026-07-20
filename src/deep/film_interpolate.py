@@ -16,6 +16,8 @@ from pathlib import Path
 import numpy as np
 import torch
 
+from src.utils.image import replicate_to_rgb01
+
 # the network downsamples internally; H/W must be a multiple of this,
 # matching the padding convention used by the original FILM port.
 _ALIGN = 64
@@ -46,7 +48,7 @@ def _to_tensor(gray: np.ndarray) -> tuple[torch.Tensor, tuple[int, int, int, int
     # FILM is pretrained on RGB video -- replicate the single IR channel
     # to 3 identical channels so the pretrained conv filters (which expect
     # 3 input channels) can be applied at all.
-    rgb = np.repeat(gray[:, :, None], 3, axis=2).astype(np.float32) / 255.0
+    rgb = replicate_to_rgb01(gray)
     padded, crop = _pad_to_align(rgb)
     tensor = torch.from_numpy(padded).permute(2, 0, 1).unsqueeze(0)
     return tensor, crop
