@@ -8,6 +8,7 @@ h5netcdf
 boto3
 tqdm
 requests
+pytest
 
 # CPU-only PyTorch build -- this project only needs GPU for actual
 # fine-tuning later (done on Colab/Kaggle), not for local pipeline work.
