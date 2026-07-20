@@ -10,7 +10,7 @@ from pathlib import Path
 import cv2
 
 from src.baseline.farneback_interpolate import interpolate_middle_frame
-from src.eval.metrics import psnr, ssim
+from src.eval.metrics import lpips_distance, psnr, ssim
 
 
 def evaluate(triplets_dir: Path, out_csv: Path) -> list[dict]:
@@ -29,11 +29,12 @@ def evaluate(triplets_dir: Path, out_csv: Path) -> list[dict]:
             "triplet": triplet_dir.name,
             "psnr": psnr(pred, frame_mid),
             "ssim": ssim(pred, frame_mid),
+            "lpips": lpips_distance(pred, frame_mid),
         })
 
     out_csv.parent.mkdir(parents=True, exist_ok=True)
     with out_csv.open("w", newline="") as f:
-        writer = csv.DictWriter(f, fieldnames=["triplet", "psnr", "ssim"])
+        writer = csv.DictWriter(f, fieldnames=["triplet", "psnr", "ssim", "lpips"])
         writer.writeheader()
         writer.writerows(rows)
 
@@ -50,8 +51,10 @@ if __name__ == "__main__":
     if rows:
         avg_psnr = sum(r["psnr"] for r in rows) / len(rows)
         avg_ssim = sum(r["ssim"] for r in rows) / len(rows)
+        avg_lpips = sum(r["lpips"] for r in rows) / len(rows)
         print(f"Evaluated {len(rows)} triplets")
         print(f"Mean PSNR: {avg_psnr:.2f} dB")
         print(f"Mean SSIM: {avg_ssim:.4f}")
+        print(f"Mean LPIPS: {avg_lpips:.4f}")
     else:
         print("No triplets found.")
