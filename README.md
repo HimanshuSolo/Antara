@@ -150,7 +150,7 @@ python3 -m venv .venv
 # 11. Interactive demo: a single self-contained HTML page with a
 #     before/after slider comparing Farneback vs. FILM on one triplet
 .venv/bin/python -m src.eval.generate_demo \
-  --triplet-dir data/processed/triplets_cyclone/triplet_0000 --film-model-path models/film_net_finetuned.pt
+  --triplets-dir data/processed/triplets_cyclone --film-model-path models/film_net_finetuned.pt
 
 # 12. Multi-frame interpolation (stretch): N evenly-spaced synthesized
 #     frames instead of just the midpoint, qualitative only
@@ -201,7 +201,7 @@ src/
               plot_multiframe.py       — Nx multi-frame interpolation panel (stretch)
               ablate_patch_size.py     — Farneback/FILM at several patch sizes
               generate_report.py       — assemble results + ablations + figures into a report skeleton
-              generate_demo.py         — self-contained before/after slider demo (one triplet)
+              generate_demo.py         — self-contained before/after slider demo per triplet
 tests/        unit tests for metrics, baseline, FILM interpolation, and the data pipeline
 ```
 
