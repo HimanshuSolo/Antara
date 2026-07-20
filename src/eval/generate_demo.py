@@ -109,13 +109,41 @@ def write_demo(triplet_dir: Path, film_model_path: Path, out_path: Path, device:
     return out_path
 
 
+def save_demos(
+    triplets_dir: Path,
+    film_model_path: Path,
+    out_dir: Path,
+    device: str | None = None,
+    limit: int | None = None,
+) -> list[Path]:
+    out_dir.mkdir(parents=True, exist_ok=True)
+    written = []
+    triplet_dirs = sorted(p for p in triplets_dir.iterdir() if p.is_dir())
+    if limit is not None:
+        triplet_dirs = triplet_dirs[:limit]
+
+    for triplet_dir in triplet_dirs:
+        out_path = out_dir / f"{triplet_dir.name}.html"
+        write_demo(triplet_dir, film_model_path, out_path, device=device)
+        written.append(out_path)
+
+    return written
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--triplet-dir", default="data/processed/triplets_cyclone/triplet_0000")
+    parser.add_argument("--triplets-dir", default="data/processed/triplets_cyclone")
     parser.add_argument("--film-model-path", default="models/film_net_fp32.pt")
-    parser.add_argument("--out", default="data/processed/demo.html")
+    parser.add_argument("--out-dir", default="data/processed/demo")
     parser.add_argument("--device", default=None, help="cuda / cpu -- auto-detects if omitted")
+    parser.add_argument("--limit", type=int, default=3, help="number of triplets to render (sorted order)")
     args = parser.parse_args()
 
-    out_path = write_demo(Path(args.triplet_dir), Path(args.film_model_path), Path(args.out), device=args.device)
-    print(f"Wrote {out_path}")
+    written = save_demos(
+        Path(args.triplets_dir),
+        Path(args.film_model_path),
+        Path(args.out_dir),
+        device=args.device,
+        limit=args.limit,
+    )
+    print(f"Wrote {len(written)} demo pages to {args.out_dir}")
