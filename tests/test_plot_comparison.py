@@ -4,11 +4,11 @@ import cv2
 import numpy as np
 import pytest
 
-from src.eval.plot_comparison import build_comparison_figure, save_comparisons
+from src.eval.plot_comparison import build_comparison_figure, list_triplet_dirs, save_comparisons
 
 MODEL_PATH = Path("models/film_net_fp32.pt")
 
-pytestmark = pytest.mark.skipif(
+requires_film_checkpoint = pytest.mark.skipif(
     not MODEL_PATH.exists(),
     reason="FILM checkpoint not downloaded -- run `python -m src.deep.download_film` first",
 )
@@ -21,6 +21,7 @@ def _write_triplet(triplet_dir: Path) -> None:
         cv2.imwrite(str(triplet_dir / name), img)
 
 
+@requires_film_checkpoint
 def test_build_comparison_figure_has_five_panels(tmp_path):
     triplet_dir = tmp_path / "triplet_0"
     _write_triplet(triplet_dir)
@@ -34,6 +35,7 @@ def test_build_comparison_figure_has_five_panels(tmp_path):
         plt.close(fig)
 
 
+@requires_film_checkpoint
 def test_save_comparisons_writes_one_png_per_triplet(tmp_path):
     triplets_dir = tmp_path / "triplets"
     for i in range(2):
@@ -44,3 +46,22 @@ def test_save_comparisons_writes_one_png_per_triplet(tmp_path):
 
     assert len(written) == 2
     assert all(p.exists() for p in written)
+
+
+def test_list_triplet_dirs_sorts_and_skips_files(tmp_path):
+    (tmp_path / "triplet_1").mkdir()
+    (tmp_path / "triplet_0").mkdir()
+    (tmp_path / "not_a_triplet.txt").write_text("")
+
+    dirs = list_triplet_dirs(tmp_path)
+
+    assert [d.name for d in dirs] == ["triplet_0", "triplet_1"]
+
+
+def test_list_triplet_dirs_respects_limit(tmp_path):
+    for i in range(3):
+        (tmp_path / f"triplet_{i}").mkdir()
+
+    dirs = list_triplet_dirs(tmp_path, limit=2)
+
+    assert [d.name for d in dirs] == ["triplet_0", "triplet_1"]
