@@ -16,7 +16,7 @@ from pathlib import Path
 
 from src.deep.finetune_film import finetune
 from src.eval.evaluate_film import evaluate as evaluate_film
-from src.eval.evaluate_stratified import summarize
+from src.eval.metrics import summarize
 
 
 def materialize_subset(triplet_dirs: list[Path], subset_dir: Path) -> Path:

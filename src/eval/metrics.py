@@ -48,3 +48,14 @@ def lpips_distance(pred: np.ndarray, target: np.ndarray) -> float:
     with torch.no_grad():
         dist = model(_to_lpips_tensor(pred), _to_lpips_tensor(target))
     return float(dist.item())
+
+
+def summarize(rows: list[dict]) -> tuple[float, float, float]:
+    """Average the psnr/ssim/lpips fields of a list of per-triplet result
+    rows (as produced by evaluate_baseline.evaluate()/evaluate_film.evaluate())."""
+    if not rows:
+        return float("nan"), float("nan"), float("nan")
+    mean_psnr = sum(r["psnr"] for r in rows) / len(rows)
+    mean_ssim = sum(r["ssim"] for r in rows) / len(rows)
+    mean_lpips = sum(r["lpips"] for r in rows) / len(rows)
+    return mean_psnr, mean_ssim, mean_lpips

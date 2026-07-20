@@ -12,15 +12,7 @@ from pathlib import Path
 
 from src.eval.evaluate_baseline import evaluate as evaluate_baseline
 from src.eval.evaluate_film import evaluate as evaluate_film
-
-
-def summarize(rows: list[dict]) -> tuple[float, float, float]:
-    if not rows:
-        return float("nan"), float("nan"), float("nan")
-    mean_psnr = sum(r["psnr"] for r in rows) / len(rows)
-    mean_ssim = sum(r["ssim"] for r in rows) / len(rows)
-    mean_lpips = sum(r["lpips"] for r in rows) / len(rows)
-    return mean_psnr, mean_ssim, mean_lpips
+from src.eval.metrics import summarize
 
 
 def run_stratified(

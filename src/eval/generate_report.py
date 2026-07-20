@@ -15,7 +15,7 @@ import csv
 import os
 from pathlib import Path
 
-from src.eval.evaluate_stratified import summarize
+from src.eval.metrics import summarize
 
 SUBSETS = ["calm", "cyclone"]
 METHODS = ["farneback", "film"]

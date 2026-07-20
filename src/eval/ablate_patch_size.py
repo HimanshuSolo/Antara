@@ -11,7 +11,7 @@ from pathlib import Path
 from src.data.extract_triplets import build_triplets, default_center, load_radiance
 from src.eval.evaluate_baseline import evaluate as evaluate_baseline
 from src.eval.evaluate_film import evaluate as evaluate_film
-from src.eval.evaluate_stratified import summarize
+from src.eval.metrics import summarize
 
 
 def run_patch_size_ablation(
