@@ -52,6 +52,11 @@ def to_uint8(rad: np.ndarray, lo: float | None = None, hi: float | None = None) 
     return (normalized * 255).astype(np.uint8)
 
 
+def default_center(shape: tuple[int, int]) -> tuple[int, int]:
+    """Pixel coordinates of the center of a (rows, cols) array."""
+    return (shape[0] // 2, shape[1] // 2)
+
+
 def crop_patch(img: np.ndarray, center: tuple[int, int], size: int) -> np.ndarray:
     """Crop a `size` x `size` patch centered at `center` (row, col) pixel coords."""
     cy, cx = center
@@ -128,8 +133,7 @@ if __name__ == "__main__":
         raise SystemExit(f"No .nc files found in {args.raw_dir} -- run fetch_goes.py first")
 
     if args.center_row is None or args.center_col is None:
-        sample_shape = load_radiance(nc_paths[0]).shape
-        center = (sample_shape[0] // 2, sample_shape[1] // 2)
+        center = default_center(load_radiance(nc_paths[0]).shape)
     else:
         center = (args.center_row, args.center_col)
 
