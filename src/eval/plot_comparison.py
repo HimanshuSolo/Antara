@@ -22,6 +22,17 @@ from src.deep.film_interpolate import interpolate_middle_frame as film_interpola
 from src.eval.metrics import lpips_distance, psnr, ssim
 
 
+def list_triplet_dirs(triplets_dir: Path, limit: int | None = None) -> list[Path]:
+    """Sorted triplet subdirectories under `triplets_dir`, optionally
+    truncated to the first `limit` -- shared by every script that renders
+    one output artifact per triplet (this module, plot_multiframe.py,
+    generate_demo.py)."""
+    triplet_dirs = sorted(p for p in triplets_dir.iterdir() if p.is_dir())
+    if limit is not None:
+        triplet_dirs = triplet_dirs[:limit]
+    return triplet_dirs
+
+
 def load_triplet(triplet_dir: Path) -> tuple:
     frame_prev = cv2.imread(str(triplet_dir / "t-1.png"), cv2.IMREAD_GRAYSCALE)
     frame_mid = cv2.imread(str(triplet_dir / "t.png"), cv2.IMREAD_GRAYSCALE)
@@ -74,11 +85,8 @@ def save_comparisons(
 ) -> list[Path]:
     out_dir.mkdir(parents=True, exist_ok=True)
     written = []
-    triplet_dirs = sorted(p for p in triplets_dir.iterdir() if p.is_dir())
-    if limit is not None:
-        triplet_dirs = triplet_dirs[:limit]
 
-    for triplet_dir in triplet_dirs:
+    for triplet_dir in list_triplet_dirs(triplets_dir, limit=limit):
         fig = build_comparison_figure(triplet_dir, film_model_path, device=device)
         out_path = out_dir / f"{triplet_dir.name}.png"
         fig.savefig(out_path, dpi=150)
