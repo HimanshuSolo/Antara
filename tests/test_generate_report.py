@@ -50,6 +50,53 @@ def test_build_report_markdown_embeds_qualitative_panels(tmp_path):
     assert "![triplet_0000](qualitative/triplet_0000.png)" in markdown
 
 
+def test_build_report_markdown_includes_patch_size_ablation(tmp_path):
+    ablation_dir = tmp_path / "ablation_patch_size"
+    _write_csv(ablation_dir / "farneback_128.csv", [{"triplet": "a", "psnr": 20.0, "ssim": 0.5, "lpips": 0.3}])
+    _write_csv(ablation_dir / "film_128.csv", [{"triplet": "a", "psnr": 30.0, "ssim": 0.9, "lpips": 0.1}])
+
+    markdown = build_report_markdown(
+        tmp_path / "stratified", tmp_path / "qualitative", tmp_path, patch_size_dir=ablation_dir
+    )
+
+    assert "| 128 | farneback | 20.00 | 0.5000 | 0.3000 |" in markdown
+    assert "| 128 | film | 30.00 | 0.9000 | 0.1000 |" in markdown
+    assert "### Patch-size ablation" in markdown
+
+
+def test_build_report_markdown_includes_finetune_data_ablation(tmp_path):
+    ablation_dir = tmp_path / "ablation_finetune_data"
+    _write_csv(ablation_dir / "test_8.csv", [{"triplet": "a", "psnr": 27.0, "ssim": 0.8, "lpips": 0.08}])
+
+    markdown = build_report_markdown(
+        tmp_path / "stratified", tmp_path / "qualitative", tmp_path, finetune_data_dir=ablation_dir
+    )
+
+    assert "| 8 | 27.00 | 0.8000 | 0.0800 |" in markdown
+    assert "### Fine-tuning data-volume ablation" in markdown
+
+
+def test_build_report_markdown_embeds_multiframe_panels(tmp_path):
+    multiframe_dir = tmp_path / "multiframe"
+    multiframe_dir.mkdir()
+    (multiframe_dir / "triplet_0000_multiframe.png").write_bytes(b"fake png")
+
+    markdown = build_report_markdown(
+        tmp_path / "stratified", tmp_path / "qualitative", tmp_path, multiframe_dir=multiframe_dir
+    )
+
+    assert "![triplet_0000_multiframe](multiframe/triplet_0000_multiframe.png)" in markdown
+    assert "### Multi-frame interpolation" in markdown
+
+
+def test_build_report_markdown_omits_ablation_sections_when_absent(tmp_path):
+    markdown = build_report_markdown(tmp_path / "stratified", tmp_path / "qualitative", tmp_path)
+
+    assert "### Patch-size ablation" not in markdown
+    assert "### Fine-tuning data-volume ablation" not in markdown
+    assert "### Multi-frame interpolation" not in markdown
+
+
 def test_write_report_writes_file(tmp_path):
     out_path = tmp_path / "out" / "report.md"
 
