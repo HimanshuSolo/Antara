@@ -19,7 +19,7 @@ import matplotlib.pyplot as plt
 
 from src.baseline.farneback_interpolate import interpolate_middle_frame as farneback_interpolate
 from src.deep.film_interpolate import interpolate_middle_frame as film_interpolate
-from src.eval.metrics import psnr, ssim
+from src.eval.metrics import lpips_distance, psnr, ssim
 
 
 def _load_triplet(triplet_dir: Path) -> tuple:
@@ -42,11 +42,13 @@ def build_comparison_figure(
     panels = [
         ("t-1 (real)", frame_prev),
         (
-            f"Farneback\nPSNR {psnr(farneback_pred, frame_mid):.1f} / SSIM {ssim(farneback_pred, frame_mid):.2f}",
+            f"Farneback\nPSNR {psnr(farneback_pred, frame_mid):.1f} / SSIM {ssim(farneback_pred, frame_mid):.2f} "
+            f"/ LPIPS {lpips_distance(farneback_pred, frame_mid):.2f}",
             farneback_pred,
         ),
         (
-            f"FILM\nPSNR {psnr(film_pred, frame_mid):.1f} / SSIM {ssim(film_pred, frame_mid):.2f}",
+            f"FILM\nPSNR {psnr(film_pred, frame_mid):.1f} / SSIM {ssim(film_pred, frame_mid):.2f} "
+            f"/ LPIPS {lpips_distance(film_pred, frame_mid):.2f}",
             film_pred,
         ),
         ("t (ground truth)", frame_mid),
