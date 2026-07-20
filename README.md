@@ -107,6 +107,11 @@ python3 -m venv .venv
 .venv/bin/python -m src.eval.plot_comparison \
   --triplets-dir data/processed/triplets_cyclone --film-model-path models/film_net_finetuned.pt
 
+# 9. Patch-size ablation: re-extract triplets at several sizes from the same
+#    raw scans and compare Farneback/FILM at each
+.venv/bin/python -m src.eval.ablate_patch_size \
+  --raw-dir data/raw --sizes 128 256 512 --film-model-path models/film_net_finetuned.pt
+
 # Run tests
 .venv/bin/python -m pytest tests/ -v
 ```
@@ -142,6 +147,7 @@ src/
               evaluate_stratified.py   — Farneback + FILM, calm vs. cyclone subsets
               plot_stratified.py       — bar chart: PSNR/SSIM/LPIPS, calm vs. cyclone
               plot_comparison.py       — qualitative side-by-side panels per triplet
+              ablate_patch_size.py     — Farneback/FILM at several patch sizes
 tests/        unit tests for metrics, baseline, FILM interpolation, and the data pipeline
 ```
 
