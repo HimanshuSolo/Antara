@@ -28,7 +28,12 @@ on fast, non-linear cloud dynamics.
 - [x] GPU support added to fine-tuning/inference (`--device`, auto-detects cuda).
 - [ ] Full fine-tuning run on more data on a Colab/Kaggle GPU — see
       `notebooks/finetune_on_colab.ipynb`, ready to run. The core contribution.
-- [ ] Cyclone/calm evaluation split via IBTrACS.
+- [x] Cyclone/calm evaluation split via IBTrACS: `build_cyclone_dataset.py`
+      finds a named storm's peak position and pulls GOES-16 scans centered on
+      it; `build_calm_dataset.py` pulls the same geographic crop from an
+      off-season window; `evaluate_stratified.py` runs Farneback + FILM over
+      both and reports PSNR/SSIM per subset — the project's headline
+      comparison.
 - [ ] INSAT-3D/3DR validation via MOSDAC (stretch).
 
 See the full plan and rationale for each step at
@@ -77,6 +82,11 @@ python3 -m venv .venv
   --triplets-dir data/processed/triplets_test --model-path models/film_net_finetuned.pt \
   --out-csv data/processed/test_film_finetuned_results.csv
 
+# 7. Build the cyclone/calm evaluation split and get the stratified comparison
+.venv/bin/python -m src.data.build_cyclone_dataset --storm-name MILTON --season 2024
+.venv/bin/python -m src.data.build_calm_dataset
+.venv/bin/python -m src.eval.evaluate_stratified --film-model-path models/film_net_finetuned.pt
+
 # Run tests
 .venv/bin/python -m pytest tests/ -v
 ```
@@ -95,17 +105,22 @@ they survive when the session ends.
 
 ```
 src/
-  data/       fetch_goes.py        — download GOES-16 scans (public AWS Open Data)
-              extract_triplets.py  — NetCDF radiance -> normalized patch triplets
+  data/       fetch_goes.py            — download GOES-16 scans (public AWS Open Data)
+              extract_triplets.py      — NetCDF radiance -> normalized patch triplets
+              geo_projection.py        — lat/lon -> GOES full-disk pixel coordinates
+              ibtracs.py                — load cyclone track data from IBTrACS
+              build_cyclone_dataset.py — triplets centered on a storm's peak position
+              build_calm_dataset.py    — off-season triplets at the same crop, for comparison
   baseline/   farneback_interpolate.py — classical optical-flow interpolation
   deep/       download_film.py     — fetch pretrained FILM TorchScript checkpoint
               film_interpolate.py  — deep frame interpolation (FILM)
               dataset.py           — PyTorch Dataset over triplet directories
               finetune_film.py     — fine-tune FILM on satellite triplets
-  eval/       metrics.py           — PSNR/SSIM
-              evaluate_baseline.py — run Farneback baseline over all triplets
-              evaluate_film.py     — run FILM (pretrained or fine-tuned) over all triplets
-tests/        unit tests for metrics, baseline, and FILM interpolation
+  eval/       metrics.py               — PSNR/SSIM
+              evaluate_baseline.py     — run Farneback baseline over all triplets
+              evaluate_film.py         — run FILM (pretrained or fine-tuned) over all triplets
+              evaluate_stratified.py   — Farneback + FILM, calm vs. cyclone subsets
+tests/        unit tests for metrics, baseline, FILM interpolation, and the data pipeline
 ```
 
 ## Data source
