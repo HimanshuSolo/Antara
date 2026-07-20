@@ -20,7 +20,7 @@ on fast, non-linear cloud dynamics.
 - [x] Data pipeline: fetch GOES-16 ABI-L1b radiance scans from NOAA's public
       AWS Open Data bucket, extract patch triplets `(t-1, t, t+1)`.
 - [x] Classical baseline: Farneback dense optical flow + bidirectional warp/blend.
-- [x] Evaluation: PSNR/SSIM against the real held-out middle frame.
+- [x] Evaluation: PSNR/SSIM/LPIPS against the real held-out middle frame.
 - [x] Pretrained deep interpolation (FILM, zero-shot): 30.7 dB / 0.87 SSIM vs. baseline's 24.4 dB / 0.57 SSIM.
 - [x] Fine-tuning proof-of-concept on CPU: 28.7 dB / 0.82 SSIM on a held-out test
       set, vs. 27.8 dB / 0.80 SSIM zero-shot on the same set. Small-scale (31
@@ -32,7 +32,7 @@ on fast, non-linear cloud dynamics.
       finds a named storm's peak position and pulls GOES-16 scans centered on
       it; `build_calm_dataset.py` pulls the same geographic crop from an
       off-season window; `evaluate_stratified.py` runs Farneback + FILM over
-      both and reports PSNR/SSIM per subset — the project's headline
+      both and reports PSNR/SSIM/LPIPS per subset — the project's headline
       comparison.
 - [ ] INSAT-3D/3DR validation via MOSDAC (stretch).
 
@@ -63,7 +63,7 @@ python3 -m venv .venv
 .venv/bin/python -m src.data.extract_triplets \
   --raw-dir data/raw --out-dir data/processed/triplets --size 256
 
-# 3. Run the classical Farneback baseline and get PSNR/SSIM
+# 3. Run the classical Farneback baseline and get PSNR/SSIM/LPIPS
 .venv/bin/python -m src.eval.evaluate_baseline \
   --triplets-dir data/processed/triplets --out-csv data/processed/baseline_results.csv
 
@@ -122,11 +122,11 @@ src/
               film_interpolate.py  — deep frame interpolation (FILM)
               dataset.py           — PyTorch Dataset over triplet directories
               finetune_film.py     — fine-tune FILM on satellite triplets
-  eval/       metrics.py               — PSNR/SSIM
+  eval/       metrics.py               — PSNR/SSIM/LPIPS
               evaluate_baseline.py     — run Farneback baseline over all triplets
               evaluate_film.py         — run FILM (pretrained or fine-tuned) over all triplets
               evaluate_stratified.py   — Farneback + FILM, calm vs. cyclone subsets
-              plot_stratified.py       — bar chart: PSNR/SSIM, calm vs. cyclone
+              plot_stratified.py       — bar chart: PSNR/SSIM/LPIPS, calm vs. cyclone
               plot_comparison.py       — qualitative side-by-side panels per triplet
 tests/        unit tests for metrics, baseline, FILM interpolation, and the data pipeline
 ```
