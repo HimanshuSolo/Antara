@@ -1,8 +1,20 @@
 from pathlib import Path
 
-from src.data.ibtracs import list_storms, load_track
+from src.data.ibtracs import download_ibtracs, list_storms, load_track
 
 FIXTURE = Path(__file__).parent / "fixtures" / "ibtracs_sample.csv"
+
+
+def test_download_ibtracs_skips_when_dest_already_exists(tmp_path):
+    dest = tmp_path / "ibtracs.csv"
+    dest.write_bytes(b"already here")
+
+    # No network access should be attempted -- if it were, this would
+    # fail/hang against the bogus URL below.
+    result = download_ibtracs(dest, url="http://example.invalid/not-a-real-file")
+
+    assert result == dest
+    assert dest.read_bytes() == b"already here"
 
 
 def test_list_storms_finds_hurricane_strength_storms():
