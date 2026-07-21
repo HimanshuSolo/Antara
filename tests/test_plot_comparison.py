@@ -4,7 +4,7 @@ import cv2
 import numpy as np
 import pytest
 
-from src.eval.plot_comparison import build_comparison_figure, list_triplet_dirs, save_comparisons
+from src.eval.plot_comparison import build_comparison_figure, list_triplet_dirs, load_triplet, save_comparisons
 
 MODEL_PATH = Path("models/film_net_fp32.pt")
 
@@ -65,3 +65,14 @@ def test_list_triplet_dirs_respects_limit(tmp_path):
     dirs = list_triplet_dirs(tmp_path, limit=2)
 
     assert [d.name for d in dirs] == ["triplet_0", "triplet_1"]
+
+
+def test_load_triplet_raises_when_a_frame_is_missing(tmp_path):
+    triplet_dir = tmp_path / "triplet_0"
+    triplet_dir.mkdir()
+    cv2.imwrite(str(triplet_dir / "t-1.png"), np.zeros((8, 8), dtype=np.uint8))
+    cv2.imwrite(str(triplet_dir / "t.png"), np.zeros((8, 8), dtype=np.uint8))
+    # t+1.png deliberately missing
+
+    with pytest.raises(FileNotFoundError, match="Missing t-1/t/t\\+1.png"):
+        load_triplet(triplet_dir)
