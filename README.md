@@ -165,9 +165,10 @@ python3 -m venv .venv
 # Run tests
 .venv/bin/python -m pytest tests/ -v
 
-# Lint (same check CI runs)
-.venv/bin/pip install ruff
+# Lint + type check (same checks CI runs; config lives in pyproject.toml)
+.venv/bin/pip install ruff mypy
 .venv/bin/ruff check src/ tests/
+.venv/bin/python -m mypy src/ tests/
 ```
 
 ## Scaling up fine-tuning on Colab
