@@ -87,7 +87,16 @@ on fast, non-linear cloud dynamics.
       `finetune_film.finetune()` and `ablate_finetune_data.materialize_subset()`
       unchanged; windowing is the only new logic. An optional `--test-dir`
       evaluates the updated checkpoint (PSNR/SSIM/LPIPS) so you can tell
-      whether a given update actually helped before trusting it.
+      whether a given update actually helped before trusting it. Run for
+      real: applied to the existing fine-tuned checkpoint (28.7 dB
+      baseline above), windowed to the 16 most-recently-added triplets
+      from the same fine-tuning pool, 5 more epochs -- PSNR nudges to
+      **28.83 dB** / 0.8254 SSIM on the same held-out test set. Same
+      caveat as continual fine-tuning's design intent: this reuses the
+      existing pool as a stand-in "growing pool" rather than genuinely new
+      streaming data (none was available), so it demonstrates the
+      mechanism works end-to-end on real GOES-16 data, not seasonal
+      adaptation specifically.
 - [ ] INSAT-3D/3DR validation via MOSDAC (stretch).
 
 See the full plan and rationale for each step at
