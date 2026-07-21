@@ -24,7 +24,7 @@ import argparse
 from pathlib import Path
 
 import torch
-from torch.utils.data import DataLoader
+from torch.utils.data import DataLoader, Dataset
 
 from src.deep.dataset import TripletDataset
 
@@ -57,6 +57,8 @@ def finetune(
     # itself that must respect time order.
     val_size = max(1, int(len(dataset) * val_fraction)) if len(dataset) > 1 else 0
     train_size = len(dataset) - val_size
+    train_ds: Dataset
+    val_ds: Dataset | None
     if val_size == 0:
         train_ds, val_ds = dataset, None
     else:
@@ -68,7 +70,7 @@ def finetune(
 
     optimizer = torch.optim.Adam(model.parameters(), lr=lr)
 
-    history = {"train_loss": [], "val_loss": []}
+    history: dict[str, list[float]] = {"train_loss": [], "val_loss": []}
 
     for epoch in range(epochs):
         model.train()
