@@ -18,6 +18,8 @@ from pathlib import Path
 
 from src.deep.ablate_finetune_data import materialize_subset
 from src.deep.finetune_film import finetune
+from src.eval.evaluate_film import evaluate as evaluate_film
+from src.eval.metrics import summarize
 from src.eval.plot_comparison import list_triplet_dirs
 
 
@@ -31,10 +33,14 @@ def continual_update(
     lr: float = 1e-5,
     val_fraction: float = 0.2,
     device: str | None = None,
+    test_dir: Path | None = None,
+    test_csv: Path | None = None,
 ) -> dict:
     """Fine-tune `model_path` on the most recent `window_size` triplets in
     `pool_dir` (the whole pool, if it's smaller), saving the updated
-    checkpoint to `out_path`. Returns finetune()'s loss history.
+    checkpoint to `out_path`. Returns finetune()'s loss history, plus a
+    "test_metrics" (psnr, ssim, lpips) entry if `test_dir` is given -- so a
+    caller can tell whether this update actually helped before trusting it.
     """
     all_dirs = list_triplet_dirs(pool_dir)
     if not all_dirs:
@@ -45,7 +51,7 @@ def continual_update(
     materialize_subset(recent_dirs, window_dir)
 
     print(f"Continual update: {len(recent_dirs)}/{len(all_dirs)} most recent triplets from {pool_dir}")
-    return finetune(
+    history = finetune(
         model_path,
         window_dir,
         out_path,
@@ -55,6 +61,15 @@ def continual_update(
         val_fraction=val_fraction,
         device=device,
     )
+
+    if test_dir is not None:
+        test_csv = test_csv or out_path.parent / f"{out_path.stem}_test.csv"
+        rows = evaluate_film(test_dir, out_path, test_csv, device=device)
+        mean_psnr, mean_ssim, mean_lpips = summarize(rows)
+        print(f"Updated checkpoint on {test_dir}: PSNR={mean_psnr:.2f} dB  SSIM={mean_ssim:.4f}  LPIPS={mean_lpips:.4f}")
+        history["test_metrics"] = (mean_psnr, mean_ssim, mean_lpips)
+
+    return history
 
 
 if __name__ == "__main__":
@@ -68,6 +83,8 @@ if __name__ == "__main__":
     parser.add_argument("--lr", type=float, default=1e-5)
     parser.add_argument("--val-fraction", type=float, default=0.2)
     parser.add_argument("--device", default=None, help="cuda / cpu -- auto-detects if omitted")
+    parser.add_argument("--test-dir", default=None, help="held-out triplets to evaluate the updated checkpoint on")
+    parser.add_argument("--test-csv", default=None, help="defaults to <out-path stem>_test.csv")
     args = parser.parse_args()
 
     continual_update(
@@ -80,4 +97,6 @@ if __name__ == "__main__":
         lr=args.lr,
         val_fraction=args.val_fraction,
         device=args.device,
+        test_dir=Path(args.test_dir) if args.test_dir else None,
+        test_csv=Path(args.test_csv) if args.test_csv else None,
     )
