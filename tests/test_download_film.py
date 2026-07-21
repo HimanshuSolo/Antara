@@ -1,5 +1,3 @@
-from pathlib import Path
-
 from src.deep.download_film import download
 
 
