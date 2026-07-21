@@ -89,12 +89,25 @@ def test_build_report_markdown_embeds_multiframe_panels(tmp_path):
     assert "### Multi-frame interpolation" in markdown
 
 
+def test_build_report_markdown_includes_continual_finetune_results(tmp_path):
+    continual_csv = tmp_path / "continual_test.csv"
+    _write_csv(continual_csv, [{"triplet": "a", "psnr": 29.0, "ssim": 0.88, "lpips": 0.05}])
+
+    markdown = build_report_markdown(
+        tmp_path / "stratified", tmp_path / "qualitative", tmp_path, continual_csv=continual_csv
+    )
+
+    assert "| 29.00 | 0.8800 | 0.0500 |" in markdown
+    assert "### Continual fine-tuning (stretch)" in markdown
+
+
 def test_build_report_markdown_omits_ablation_sections_when_absent(tmp_path):
     markdown = build_report_markdown(tmp_path / "stratified", tmp_path / "qualitative", tmp_path)
 
     assert "### Patch-size ablation" not in markdown
     assert "### Fine-tuning data-volume ablation" not in markdown
     assert "### Multi-frame interpolation" not in markdown
+    assert "### Continual fine-tuning" not in markdown
 
 
 def test_write_report_writes_file(tmp_path):
