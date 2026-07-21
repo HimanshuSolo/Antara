@@ -78,6 +78,14 @@ on fast, non-linear cloud dynamics.
       this dataset has ground truth solely at the true midpoint, so only
       the num_frames=1 case is quantitatively checkable (that's what
       `evaluate_film.py` already does).
+- [x] Online/continual fine-tuning (stretch): `src/deep/continual_finetune.py`'s
+      `continual_update()` fine-tunes an existing checkpoint on just the
+      `window_size` most-recently-added triplets from a growing pool,
+      rather than retraining from scratch each time new satellite passes
+      stream in — adapts to recent conditions (e.g. seasonal cloud-pattern
+      shift) instead of being pulled back toward stale ones. Reuses
+      `finetune_film.finetune()` and `ablate_finetune_data.materialize_subset()`
+      unchanged; windowing is the only new logic.
 - [ ] INSAT-3D/3DR validation via MOSDAC (stretch).
 
 See the full plan and rationale for each step at
@@ -159,7 +167,14 @@ python3 -m venv .venv
 .venv/bin/python -m src.eval.plot_multiframe \
   --triplets-dir data/processed/triplets_cyclone --film-model-path models/film_net_finetuned.pt --num-frames 3
 
-# 13. Assemble everything above into a report skeleton (narrative sections
+# 13. Continual fine-tuning (stretch): incrementally update an existing
+#     checkpoint on just the most-recently-added triplets in a growing
+#     pool, instead of retraining from scratch as new passes stream in
+.venv/bin/python -m src.deep.continual_finetune \
+  --model-path models/film_net_finetuned.pt --pool-dir data/processed/triplets_stream \
+  --out-path models/film_net_finetuned_updated.pt --window-size 100
+
+# 14. Assemble everything above into a report skeleton (narrative sections
 #     left as TODOs -- see docs/PLAN.md for the deliverable this fills in;
 #     ablation/multiframe sections are included automatically if present)
 .venv/bin/python -m src.eval.generate_report
@@ -199,6 +214,7 @@ src/
               dataset.py           — PyTorch Dataset over triplet directories
               finetune_film.py     — fine-tune FILM on satellite triplets
               ablate_finetune_data.py — fine-tune on increasing triplet counts, evaluate each checkpoint
+              continual_finetune.py — windowed incremental fine-tuning on a growing triplet pool (stretch)
   eval/       metrics.py               — PSNR/SSIM/LPIPS
               evaluate_baseline.py     — run Farneback baseline over all triplets
               evaluate_film.py         — run FILM (pretrained or fine-tuned) over all triplets
