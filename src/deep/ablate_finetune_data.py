@@ -17,6 +17,7 @@ from pathlib import Path
 from src.deep.finetune_film import finetune
 from src.eval.evaluate_film import evaluate as evaluate_film
 from src.eval.metrics import summarize
+from src.eval.plot_comparison import list_triplet_dirs
 
 
 def materialize_subset(triplet_dirs: list[Path], subset_dir: Path) -> Path:
@@ -40,7 +41,7 @@ def run_finetune_data_ablation(
     epochs: int = 5,
     device: str | None = None,
 ) -> dict[int, tuple[float, float, float]]:
-    all_dirs = sorted(d for d in triplets_finetune_dir.iterdir() if d.is_dir())
+    all_dirs = list_triplet_dirs(triplets_finetune_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
 
     results: dict[int, tuple[float, float, float]] = {}
