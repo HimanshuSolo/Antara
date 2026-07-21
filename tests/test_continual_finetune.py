@@ -85,6 +85,24 @@ def test_continual_update_raises_when_pool_is_empty(tmp_path):
         continual_update(MODEL_PATH, pool_dir, tmp_path / "updated.pt")
 
 
+def test_continual_update_rejects_window_size_zero(tmp_path):
+    # lst[-0:] is the whole list, not empty -- window_size=0 must be
+    # rejected explicitly rather than silently training on the entire pool.
+    pool_dir = tmp_path / "pool"
+    _write_triplets(pool_dir, count=3)
+
+    with pytest.raises(ValueError, match="window_size must be >= 1"):
+        continual_update(MODEL_PATH, pool_dir, tmp_path / "updated.pt", window_size=0)
+
+
+def test_continual_update_rejects_negative_window_size(tmp_path):
+    pool_dir = tmp_path / "pool"
+    _write_triplets(pool_dir, count=3)
+
+    with pytest.raises(ValueError, match="window_size must be >= 1"):
+        continual_update(MODEL_PATH, pool_dir, tmp_path / "updated.pt", window_size=-1)
+
+
 def test_continual_update_reports_test_metrics_when_test_dir_given(tmp_path):
     pool_dir = tmp_path / "pool"
     _write_triplets(pool_dir, count=3)
