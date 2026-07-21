@@ -22,7 +22,8 @@ def test_build_report_markdown_includes_results_table(tmp_path):
     assert "| calm | farneback | 20.00 | 0.5000 | 0.3000 |" in markdown
     assert "| calm | film | 30.00 | 0.9000 | 0.1000 |" in markdown
     assert "## Results" in markdown
-    assert "<!-- TODO -->" in markdown
+    assert "## Conclusion" in markdown
+    assert "no manual labeling" in markdown
 
 
 def test_build_report_markdown_skips_missing_subsets(tmp_path):
@@ -108,6 +109,17 @@ def test_build_report_markdown_omits_ablation_sections_when_absent(tmp_path):
     assert "### Fine-tuning data-volume ablation" not in markdown
     assert "### Multi-frame interpolation" not in markdown
     assert "### Continual fine-tuning" not in markdown
+
+
+def test_build_report_markdown_includes_narrative_sections(tmp_path):
+    markdown = build_report_markdown(tmp_path / "stratified", tmp_path / "qualitative", tmp_path)
+
+    assert "## Related Work" in markdown
+    assert "FILM" in markdown and "Reda et al." in markdown
+    assert "## Method" in markdown
+    assert "Farneback" in markdown
+    assert "## Experiments" in markdown
+    assert "IBTrACS" in markdown
 
 
 def test_write_report_writes_file(tmp_path):
