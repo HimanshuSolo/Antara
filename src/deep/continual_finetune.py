@@ -48,6 +48,16 @@ def continual_update(
 
     recent_dirs = all_dirs[-window_size:]
     window_dir = out_path.parent / f"{out_path.stem}_window"
+    # continual_update() is meant to be called again and again on the same
+    # out_path as new triplets arrive -- drop any symlink left over from a
+    # previous call whose target has since fallen out of the window, or
+    # the window would silently grow into a full retrain over time instead
+    # of staying a bounded recency window.
+    recent_names = {d.name for d in recent_dirs}
+    if window_dir.exists():
+        for existing in window_dir.iterdir():
+            if existing.name not in recent_names:
+                existing.unlink()
     materialize_subset(recent_dirs, window_dir)
 
     print(f"Continual update: {len(recent_dirs)}/{len(all_dirs)} most recent triplets from {pool_dir}")
