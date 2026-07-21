@@ -1,5 +1,7 @@
 # Antara
 
+[![tests](https://github.com/HimanshuSolo/Antara/actions/workflows/tests.yml/badge.svg)](https://github.com/HimanshuSolo/Antara/actions/workflows/tests.yml)
+
 *Antara* (अंतर) — It means "interval" or "the space between" —
 fills the interval between satellite frames.
 
