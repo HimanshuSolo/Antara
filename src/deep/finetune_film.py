@@ -17,6 +17,11 @@ NOTE ON COMPUTE: auto-detects and uses a GPU if one is available (see
 happen on a Colab/Kaggle GPU per docs/PLAN.md, since CPU fine-tuning of a
 ~34M-parameter video model does not scale to the epoch counts/data volume
 a real result needs.
+
+When a validation split exists, the checkpoint that's actually saved is
+whichever epoch had the lowest validation loss, not just the last one --
+important once epoch counts grow past what the small fine-tuning pools in
+this project can support without overfitting.
 """
 from __future__ import annotations
 
@@ -71,6 +76,9 @@ def finetune(
     optimizer = torch.optim.Adam(model.parameters(), lr=lr)
 
     history: dict[str, list[float]] = {"train_loss": [], "val_loss": []}
+    best_val_loss = float("inf")
+    best_state: dict[str, torch.Tensor] | None = None
+    best_epoch = 0
 
     for epoch in range(epochs):
         model.train()
@@ -110,11 +118,23 @@ def finetune(
                     val_batches += 1
             val_loss = val_running / max(val_batches, 1)
             history["val_loss"].append(val_loss)
+            if val_loss < best_val_loss:
+                best_val_loss = val_loss
+                best_epoch = epoch + 1
+                best_state = {k: v.detach().clone() for k, v in model.state_dict().items()}
 
         msg = f"epoch {epoch + 1}/{epochs}  train_loss={train_loss:.4f}"
         if val_loss is not None:
             msg += f"  val_loss={val_loss:.4f}"
         print(msg)
+
+    # Ship the checkpoint with the lowest validation loss seen during
+    # training, not just whichever epoch happened to run last -- with
+    # enough epochs the final one can already be past the point where the
+    # model started overfitting the (often small) fine-tuning set.
+    if best_state is not None:
+        model.load_state_dict(best_state)
+        print(f"Restoring epoch {best_epoch}'s weights (best val_loss={best_val_loss:.4f})")
 
     out_path.parent.mkdir(parents=True, exist_ok=True)
     model.to("cpu")  # save a checkpoint that loads on any machine, GPU or not
