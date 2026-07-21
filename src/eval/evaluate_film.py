@@ -12,22 +12,19 @@ import argparse
 import csv
 from pathlib import Path
 
-import cv2
-
 from src.deep.film_interpolate import interpolate_middle_frame
 from src.eval.metrics import lpips_distance, psnr, ssim, summarize
+from src.eval.plot_comparison import list_triplet_dirs
+from src.utils.image import load_triplet_frames
 
 
 def evaluate(triplets_dir: Path, model_path: Path, out_csv: Path, device: str | None = None) -> list[dict]:
     rows = []
-    for triplet_dir in sorted(triplets_dir.iterdir()):
-        if not triplet_dir.is_dir():
+    for triplet_dir in list_triplet_dirs(triplets_dir):
+        frames = load_triplet_frames(triplet_dir)
+        if frames is None:
             continue
-        frame_prev = cv2.imread(str(triplet_dir / "t-1.png"), cv2.IMREAD_GRAYSCALE)
-        frame_mid = cv2.imread(str(triplet_dir / "t.png"), cv2.IMREAD_GRAYSCALE)
-        frame_next = cv2.imread(str(triplet_dir / "t+1.png"), cv2.IMREAD_GRAYSCALE)
-        if frame_prev is None or frame_mid is None or frame_next is None:
-            continue
+        frame_prev, frame_mid, frame_next = frames
 
         pred = interpolate_middle_frame(frame_prev, frame_next, model_path, device=device)
         rows.append({
