@@ -42,6 +42,11 @@ def continual_update(
     "test_metrics" (psnr, ssim, lpips) entry if `test_dir` is given -- so a
     caller can tell whether this update actually helped before trusting it.
     """
+    if window_size < 1:
+        # lst[-0:] is the *whole* list, not empty -- window_size=0 would
+        # otherwise silently train on the entire pool instead of failing.
+        raise ValueError(f"window_size must be >= 1, got {window_size}")
+
     all_dirs = list_triplet_dirs(pool_dir)
     if not all_dirs:
         raise ValueError(f"No triplets found in {pool_dir}")
