@@ -85,7 +85,9 @@ on fast, non-linear cloud dynamics.
       stream in — adapts to recent conditions (e.g. seasonal cloud-pattern
       shift) instead of being pulled back toward stale ones. Reuses
       `finetune_film.finetune()` and `ablate_finetune_data.materialize_subset()`
-      unchanged; windowing is the only new logic.
+      unchanged; windowing is the only new logic. An optional `--test-dir`
+      evaluates the updated checkpoint (PSNR/SSIM/LPIPS) so you can tell
+      whether a given update actually helped before trusting it.
 - [ ] INSAT-3D/3DR validation via MOSDAC (stretch).
 
 See the full plan and rationale for each step at
@@ -169,10 +171,13 @@ python3 -m venv .venv
 
 # 13. Continual fine-tuning (stretch): incrementally update an existing
 #     checkpoint on just the most-recently-added triplets in a growing
-#     pool, instead of retraining from scratch as new passes stream in
+#     pool, instead of retraining from scratch as new passes stream in.
+#     --test-dir is optional -- evaluates the updated checkpoint so you
+#     can tell whether the update actually helped before trusting it.
 .venv/bin/python -m src.deep.continual_finetune \
   --model-path models/film_net_finetuned.pt --pool-dir data/processed/triplets_stream \
-  --out-path models/film_net_finetuned_updated.pt --window-size 100
+  --out-path models/film_net_finetuned_updated.pt --window-size 100 \
+  --test-dir data/processed/triplets_test
 
 # 14. Assemble everything above into a report skeleton (narrative sections
 #     left as TODOs -- see docs/PLAN.md for the deliverable this fills in;
