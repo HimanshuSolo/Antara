@@ -214,6 +214,24 @@ prompt for a GitHub personal access token to clone this private repo,
 and saves the fine-tuned checkpoint + result CSVs to Google Drive so
 they survive when the session ends.
 
+## Web frontend
+
+`web/` is a minimal, static Next.js site: an overview page, a results
+page (the same PSNR/SSIM/LPIPS numbers as the Status section above),
+and an interactive before/after slider comparing Farneback vs.
+fine-tuned FILM on a real cyclone frame. Monochrome by design (white/
+black, with a dark-mode variant) -- no component library, no
+client-side data fetching, every number and image baked in ahead of
+time by the Python pipeline above.
+
+```bash
+cd web
+npm install
+npm run dev   # http://localhost:3000
+```
+
+See `web/README.md` for its structure.
+
 ## Layout
 
 ```
@@ -242,6 +260,7 @@ src/
               generate_report.py       — assemble the full report: narrative + results/ablations/figures
               generate_demo.py         — self-contained before/after slider demo per triplet
 tests/        unit tests for metrics, baseline, FILM interpolation, and the data pipeline
+web/          static Next.js frontend — see "Web frontend" above and web/README.md
 ```
 
 ## Data source
