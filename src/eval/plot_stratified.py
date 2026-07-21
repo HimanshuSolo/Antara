@@ -8,7 +8,6 @@ by `evaluate_stratified.py` rather than re-running any model.
 from __future__ import annotations
 
 import argparse
-import csv
 from pathlib import Path
 
 import matplotlib
@@ -17,21 +16,14 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import numpy as np
 
+from src.eval.metrics import load_result_rows, summarize
+
 SUBSETS = ["calm", "cyclone"]
 METHODS = ["farneback", "film"]
 
 
 def _read_csv_means(csv_path: Path) -> tuple[float, float, float]:
-    if not csv_path.exists():
-        return float("nan"), float("nan"), float("nan")
-    with csv_path.open(newline="") as f:
-        rows = list(csv.DictReader(f))
-    if not rows:
-        return float("nan"), float("nan"), float("nan")
-    mean_psnr = sum(float(r["psnr"]) for r in rows) / len(rows)
-    mean_ssim = sum(float(r["ssim"]) for r in rows) / len(rows)
-    mean_lpips = sum(float(r["lpips"]) for r in rows) / len(rows)
-    return mean_psnr, mean_ssim, mean_lpips
+    return summarize(load_result_rows(csv_path))
 
 
 def load_stratified_means(results_dir: Path) -> dict[str, dict[str, tuple[float, float, float]]]:
