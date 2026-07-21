@@ -63,3 +63,31 @@ def test_continual_update_raises_when_pool_is_empty(tmp_path):
 
     with pytest.raises(ValueError, match="No triplets found"):
         continual_update(MODEL_PATH, pool_dir, tmp_path / "updated.pt")
+
+
+def test_continual_update_reports_test_metrics_when_test_dir_given(tmp_path):
+    pool_dir = tmp_path / "pool"
+    _write_triplets(pool_dir, count=3)
+    test_dir = tmp_path / "test"
+    _write_triplets(test_dir, count=2)
+    out_path = tmp_path / "updated.pt"
+    test_csv = tmp_path / "results.csv"
+
+    history = continual_update(
+        MODEL_PATH, pool_dir, out_path, window_size=3, epochs=1, batch_size=2, val_fraction=0.0,
+        test_dir=test_dir, test_csv=test_csv,
+    )
+
+    assert "test_metrics" in history
+    mean_psnr, mean_ssim, mean_lpips = history["test_metrics"]
+    assert mean_psnr == mean_psnr  # not NaN
+    assert test_csv.exists()
+
+
+def test_continual_update_omits_test_metrics_when_test_dir_not_given(tmp_path):
+    pool_dir = tmp_path / "pool"
+    _write_triplets(pool_dir, count=2)
+
+    history = continual_update(MODEL_PATH, pool_dir, tmp_path / "updated.pt", window_size=2, epochs=1, batch_size=2)
+
+    assert "test_metrics" not in history
