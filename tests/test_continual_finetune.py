@@ -15,8 +15,8 @@ pytestmark = pytest.mark.skipif(
 )
 
 
-def _write_triplets(pool_dir: Path, count: int) -> None:
-    for i in range(count):
+def _write_triplets(pool_dir: Path, count: int, start: int = 0) -> None:
+    for i in range(start, start + count):
         d = pool_dir / f"triplet_{i:04d}"
         d.mkdir(parents=True)
         for name in ("t-1.png", "t.png", "t+1.png"):
@@ -55,6 +55,26 @@ def test_continual_update_uses_the_whole_pool_when_smaller_than_the_window(tmp_p
 
     window_dir = tmp_path / "updated_window"
     assert sorted(p.name for p in window_dir.iterdir()) == ["triplet_0000", "triplet_0001"]
+
+
+def test_continual_update_window_stays_bounded_across_repeated_calls(tmp_path):
+    # continual_update() is meant to be called again and again as new
+    # triplets stream in -- the window must stay exactly window_size
+    # entries, not accumulate stale ones from earlier calls.
+    pool_dir = tmp_path / "pool"
+    _write_triplets(pool_dir, count=3)
+    out_path = tmp_path / "updated.pt"
+    window_dir = tmp_path / "updated_window"
+
+    continual_update(MODEL_PATH, pool_dir, out_path, window_size=2, epochs=1, batch_size=2, val_fraction=0.0)
+    assert sorted(p.name for p in window_dir.iterdir()) == ["triplet_0001", "triplet_0002"]
+
+    # a later "arrival" of more triplets -- the window should shift forward,
+    # not grow to include the earlier call's now-stale entries
+    _write_triplets(pool_dir, count=3, start=3)
+    continual_update(MODEL_PATH, pool_dir, out_path, window_size=2, epochs=1, batch_size=2, val_fraction=0.0)
+
+    assert sorted(p.name for p in window_dir.iterdir()) == ["triplet_0004", "triplet_0005"]
 
 
 def test_continual_update_raises_when_pool_is_empty(tmp_path):
