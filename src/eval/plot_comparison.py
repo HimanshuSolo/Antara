@@ -11,7 +11,6 @@ from __future__ import annotations
 import argparse
 from pathlib import Path
 
-import cv2
 import matplotlib
 
 matplotlib.use("Agg")
@@ -20,6 +19,7 @@ import matplotlib.pyplot as plt
 from src.baseline.farneback_interpolate import interpolate_middle_frame as farneback_interpolate
 from src.deep.film_interpolate import interpolate_middle_frame as film_interpolate
 from src.eval.metrics import lpips_distance, psnr, ssim
+from src.utils.image import load_triplet_frames
 
 
 def list_triplet_dirs(triplets_dir: Path, limit: int | None = None) -> list[Path]:
@@ -34,12 +34,10 @@ def list_triplet_dirs(triplets_dir: Path, limit: int | None = None) -> list[Path
 
 
 def load_triplet(triplet_dir: Path) -> tuple:
-    frame_prev = cv2.imread(str(triplet_dir / "t-1.png"), cv2.IMREAD_GRAYSCALE)
-    frame_mid = cv2.imread(str(triplet_dir / "t.png"), cv2.IMREAD_GRAYSCALE)
-    frame_next = cv2.imread(str(triplet_dir / "t+1.png"), cv2.IMREAD_GRAYSCALE)
-    if frame_prev is None or frame_mid is None or frame_next is None:
+    frames = load_triplet_frames(triplet_dir)
+    if frames is None:
         raise FileNotFoundError(f"Missing t-1/t/t+1.png under {triplet_dir}")
-    return frame_prev, frame_mid, frame_next
+    return frames
 
 
 def build_comparison_figure(
