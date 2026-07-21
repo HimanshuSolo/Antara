@@ -11,14 +11,15 @@ from __future__ import annotations
 
 from pathlib import Path
 
-import cv2
 import numpy as np
 import torch
 from torch.utils.data import Dataset
 
+from src.utils.image import load_triplet_frames, replicate_to_rgb01
+
 
 def _to_rgb_tensor(gray: np.ndarray) -> torch.Tensor:
-    rgb = np.repeat(gray[:, :, None], 3, axis=2).astype(np.float32) / 255.0
+    rgb = replicate_to_rgb01(gray)
     return torch.from_numpy(rgb).permute(2, 0, 1)
 
 
@@ -36,7 +37,8 @@ class TripletDataset(Dataset):
 
     def __getitem__(self, idx: int) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
         d = self.triplet_dirs[idx]
-        frame_prev = cv2.imread(str(d / "t-1.png"), cv2.IMREAD_GRAYSCALE)
-        frame_mid = cv2.imread(str(d / "t.png"), cv2.IMREAD_GRAYSCALE)
-        frame_next = cv2.imread(str(d / "t+1.png"), cv2.IMREAD_GRAYSCALE)
+        frames = load_triplet_frames(d)
+        if frames is None:
+            raise FileNotFoundError(f"Missing t-1/t/t+1.png under {d}")
+        frame_prev, frame_mid, frame_next = frames
         return _to_rgb_tensor(frame_prev), _to_rgb_tensor(frame_mid), _to_rgb_tensor(frame_next)
