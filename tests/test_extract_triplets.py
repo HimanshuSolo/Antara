@@ -144,3 +144,14 @@ def test_build_triplets_skips_triplets_spanning_an_abnormal_gap(tmp_path):
 
     # only the first triplet (scans at 0/10/20) doesn't straddle the gap
     assert len(written) == 1
+
+
+def test_build_triplets_returns_empty_for_fewer_than_two_scans(tmp_path):
+    raw_dir = tmp_path / "raw"
+    raw_dir.mkdir()
+    path = raw_dir / _scan_filename(0)
+    _write_goes_scan(path, np.zeros((8, 8), dtype=np.float32))
+
+    written = build_triplets([path], center=(4, 4), size=8, out_dir=tmp_path / "triplets")
+
+    assert written == []
