@@ -181,7 +181,8 @@ python3 -m venv .venv
 
 # 14. Assemble everything above into a report skeleton (narrative sections
 #     left as TODOs -- see docs/PLAN.md for the deliverable this fills in;
-#     ablation/multiframe sections are included automatically if present)
+#     ablation/multiframe/continual-fine-tuning sections are included
+#     automatically if present)
 .venv/bin/python -m src.eval.generate_report
 
 # Run tests
