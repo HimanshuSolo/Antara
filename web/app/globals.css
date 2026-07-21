@@ -419,6 +419,40 @@ h3 {
   right: 0.75rem;
 }
 
+input[type="range"] {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 2px;
+  background: var(--border-strong);
+  cursor: ew-resize;
+}
+
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 1px solid var(--border-strong);
+  background: var(--bg);
+  cursor: ew-resize;
+}
+
+input[type="range"]::-moz-range-thumb {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 1px solid var(--border-strong);
+  background: var(--bg);
+  cursor: ew-resize;
+}
+
+input[type="range"]::-moz-range-track {
+  height: 2px;
+  background: var(--border-strong);
+}
+
 .caveat {
   border-left: 2px solid var(--border-strong);
   padding-left: 1rem;
