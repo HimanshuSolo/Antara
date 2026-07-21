@@ -43,6 +43,12 @@ jobs:
       - name: Install dependencies
         run: pip install -r requirements.txt
 
+      - name: Install mypy
+        run: pip install mypy
+
+      - name: Type check
+        run: mypy src/ tests/ --ignore-missing-imports
+
       - name: Cache FILM checkpoint
         uses: actions/cache@v4
         with:
