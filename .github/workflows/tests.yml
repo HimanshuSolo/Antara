@@ -47,7 +47,7 @@ jobs:
         run: pip install mypy
 
       - name: Type check
-        run: mypy src/ tests/ --ignore-missing-imports
+        run: mypy src/ tests/
 
       - name: Cache FILM checkpoint
         uses: actions/cache@v4
