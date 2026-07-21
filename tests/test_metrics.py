@@ -1,9 +1,10 @@
+import csv
 import math
 
 import numpy as np
 import pytest
 
-from src.eval.metrics import lpips_distance, psnr, ssim, summarize
+from src.eval.metrics import lpips_distance, load_result_rows, psnr, ssim, summarize
 
 
 def test_psnr_identical_images_is_high():
@@ -57,3 +58,19 @@ def test_summarize_handles_empty_rows():
     assert math.isnan(mean_psnr)
     assert math.isnan(mean_ssim)
     assert math.isnan(mean_lpips)
+
+
+def test_load_result_rows_parses_floats(tmp_path):
+    csv_path = tmp_path / "results.csv"
+    with csv_path.open("w", newline="") as f:
+        writer = csv.DictWriter(f, fieldnames=["triplet", "psnr", "ssim", "lpips"])
+        writer.writeheader()
+        writer.writerow({"triplet": "triplet_0", "psnr": "20.0", "ssim": "0.5", "lpips": "0.3"})
+
+    rows = load_result_rows(csv_path)
+
+    assert rows == [{"triplet": "triplet_0", "psnr": 20.0, "ssim": 0.5, "lpips": 0.3}]
+
+
+def test_load_result_rows_missing_file_returns_empty_list(tmp_path):
+    assert load_result_rows(tmp_path / "does_not_exist.csv") == []
