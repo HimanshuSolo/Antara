@@ -10,3 +10,14 @@ select = ["E4", "E7", "E9", "F"]
 [tool.mypy]
 python_version = "3.12"
 ignore_missing_imports = true
+
+[tool.coverage.run]
+source = ["src"]
+
+[tool.coverage.report]
+# CI's netCDF4 wheel embeds a Cython debug path ("src/netCDF4/_netCDF4.pyx")
+# that happens to start with "src/", so it slips through source-based
+# filtering and coverage.py then can't find that (non-existent, third-party)
+# file to report on. ignore_errors skips unreportable files instead of
+# failing the whole report -- this project's own src/ files aren't affected.
+ignore_errors = true
