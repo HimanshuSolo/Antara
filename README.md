@@ -188,10 +188,11 @@ python3 -m venv .venv
   --out-path models/film_net_finetuned_updated.pt --window-size 100 \
   --test-dir data/processed/triplets_test
 
-# 14. Assemble everything above into a report skeleton (narrative sections
-#     left as TODOs -- see docs/PLAN.md for the deliverable this fills in;
-#     ablation/multiframe/continual-fine-tuning sections are included
-#     automatically if present)
+# 14. Assemble the full report -- narrative (Problem, Related Work, Method,
+#     Experiments, Conclusion) plus results tables/figures pulled live from
+#     the CSVs/PNGs above, so the numbers can't drift from what was measured.
+#     Ablation/multiframe/continual-fine-tuning sections are included
+#     automatically if present.
 .venv/bin/python -m src.eval.generate_report
 
 # Run tests
@@ -238,7 +239,7 @@ src/
               plot_comparison.py       — qualitative side-by-side panels per triplet
               plot_multiframe.py       — Nx multi-frame interpolation panel (stretch)
               ablate_patch_size.py     — Farneback/FILM at several patch sizes
-              generate_report.py       — assemble results + ablations + figures into a report skeleton
+              generate_report.py       — assemble the full report: narrative + results/ablations/figures
               generate_demo.py         — self-contained before/after slider demo per triplet
 tests/        unit tests for metrics, baseline, FILM interpolation, and the data pipeline
 ```
