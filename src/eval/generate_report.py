@@ -11,36 +11,20 @@ fabricate them.
 from __future__ import annotations
 
 import argparse
-import csv
 import os
 from pathlib import Path
 
-from src.eval.metrics import summarize
+from src.eval.metrics import load_result_rows, summarize
 
 SUBSETS = ["calm", "cyclone"]
 METHODS = ["farneback", "film"]
-
-
-def _load_rows(csv_path: Path) -> list[dict]:
-    if not csv_path.exists():
-        return []
-    with csv_path.open(newline="") as f:
-        return [
-            {
-                "triplet": r["triplet"],
-                "psnr": float(r["psnr"]),
-                "ssim": float(r["ssim"]),
-                "lpips": float(r["lpips"]),
-            }
-            for r in csv.DictReader(f)
-        ]
 
 
 def build_results_table(results_dir: Path) -> str:
     lines = ["| Subset | Method | PSNR (dB) | SSIM | LPIPS |", "|---|---|---|---|---|"]
     for subset in SUBSETS:
         for method in METHODS:
-            rows = _load_rows(results_dir / f"{subset}_{method}.csv")
+            rows = load_result_rows(results_dir / f"{subset}_{method}.csv")
             if not rows:
                 continue
             mean_psnr, mean_ssim, mean_lpips = summarize(rows)
@@ -67,7 +51,7 @@ def build_patch_size_table(ablation_dir: Path) -> str:
     lines = ["| Size | Method | PSNR (dB) | SSIM | LPIPS |", "|---|---|---|---|---|"]
     for size in sizes:
         for method in METHODS:
-            rows = _load_rows(ablation_dir / f"{method}_{size}.csv")
+            rows = load_result_rows(ablation_dir / f"{method}_{size}.csv")
             if not rows:
                 continue
             mean_psnr, mean_ssim, mean_lpips = summarize(rows)
@@ -81,7 +65,7 @@ def build_finetune_data_table(ablation_dir: Path) -> str:
         return ""
     lines = ["| Fine-tuning triplets | PSNR (dB) | SSIM | LPIPS |", "|---|---|---|---|"]
     for count in counts:
-        rows = _load_rows(ablation_dir / f"test_{count}.csv")
+        rows = load_result_rows(ablation_dir / f"test_{count}.csv")
         if not rows:
             continue
         mean_psnr, mean_ssim, mean_lpips = summarize(rows)
