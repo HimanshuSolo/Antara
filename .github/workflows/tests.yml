@@ -49,7 +49,7 @@ jobs:
           python-version: "3.12"
 
       - name: Cache pip and torch hub downloads
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: |
             ~/.cache/pip
@@ -66,7 +66,7 @@ jobs:
         run: mypy src/ tests/
 
       - name: Cache FILM checkpoint
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: models/film_net_fp32.pt
           key: film-checkpoint-${{ hashFiles('src/deep/download_film.py') }}
