@@ -32,19 +32,19 @@ export default function DemoPage() {
       <div className="card-grid">
         <div className="card">
           <h3>Farneback (classical)</h3>
-          <dl className="prose">
+          <div className="prose">
             <p>PSNR: {farneback.psnr.toFixed(2)} dB</p>
             <p>SSIM: {farneback.ssim.toFixed(3)}</p>
             <p>LPIPS: {farneback.lpips.toFixed(3)}</p>
-          </dl>
+          </div>
         </div>
         <div className="card">
           <h3>FILM (fine-tuned)</h3>
-          <dl className="prose">
+          <div className="prose">
             <p>PSNR: {film.psnr.toFixed(2)} dB</p>
             <p>SSIM: {film.ssim.toFixed(3)}</p>
             <p>LPIPS: {film.lpips.toFixed(3)}</p>
-          </dl>
+          </div>
         </div>
         <div className="card">
           <h3>Ground truth</h3>
