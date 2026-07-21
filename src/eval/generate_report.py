@@ -73,6 +73,18 @@ def build_finetune_data_table(ablation_dir: Path) -> str:
     return "\n".join(lines)
 
 
+def build_continual_table(continual_csv: Path) -> str:
+    rows = load_result_rows(continual_csv)
+    if not rows:
+        return ""
+    mean_psnr, mean_ssim, mean_lpips = summarize(rows)
+    return "\n".join([
+        "| PSNR (dB) | SSIM | LPIPS |",
+        "|---|---|---|",
+        f"| {mean_psnr:.2f} | {mean_ssim:.4f} | {mean_lpips:.4f} |",
+    ])
+
+
 def build_report_markdown(
     results_dir: Path,
     qualitative_dir: Path,
@@ -80,6 +92,7 @@ def build_report_markdown(
     patch_size_dir: Path | None = None,
     finetune_data_dir: Path | None = None,
     multiframe_dir: Path | None = None,
+    continual_csv: Path | None = None,
 ) -> str:
     sections = [
         "# Antara: Satellite Temporal Super-Resolution via Optical-Flow-Based Frame Interpolation",
@@ -139,6 +152,11 @@ def build_report_markdown(
             sections.append(f"![{png.stem}]({rel})")
         sections.append("")
 
+    if continual_csv and continual_csv.exists():
+        table = build_continual_table(continual_csv)
+        if table:
+            sections += ["### Continual fine-tuning (stretch)", "", table, ""]
+
     sections += ["## Conclusion", "", "<!-- TODO -->", ""]
     return "\n".join(sections)
 
@@ -150,6 +168,7 @@ def write_report(
     patch_size_dir: Path | None = None,
     finetune_data_dir: Path | None = None,
     multiframe_dir: Path | None = None,
+    continual_csv: Path | None = None,
 ) -> Path:
     markdown = build_report_markdown(
         results_dir,
@@ -158,6 +177,7 @@ def write_report(
         patch_size_dir=patch_size_dir,
         finetune_data_dir=finetune_data_dir,
         multiframe_dir=multiframe_dir,
+        continual_csv=continual_csv,
     )
     out_path.parent.mkdir(parents=True, exist_ok=True)
     out_path.write_text(markdown)
@@ -171,6 +191,7 @@ if __name__ == "__main__":
     parser.add_argument("--patch-size-dir", default="data/processed/ablation_patch_size")
     parser.add_argument("--finetune-data-dir", default="data/processed/ablation_finetune_data")
     parser.add_argument("--multiframe-dir", default="data/processed/multiframe")
+    parser.add_argument("--continual-csv", default="models/film_net_finetuned_updated_test.csv")
     parser.add_argument("--out", default="data/processed/report.md")
     args = parser.parse_args()
 
@@ -181,5 +202,6 @@ if __name__ == "__main__":
         patch_size_dir=Path(args.patch_size_dir),
         finetune_data_dir=Path(args.finetune_data_dir),
         multiframe_dir=Path(args.multiframe_dir),
+        continual_csv=Path(args.continual_csv),
     )
     print(f"Wrote {out_path}")
