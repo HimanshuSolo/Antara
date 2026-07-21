@@ -3,6 +3,9 @@ against the real held-out ground-truth frame.
 """
 from __future__ import annotations
 
+import csv
+from pathlib import Path
+
 import lpips
 import numpy as np
 import torch
@@ -49,6 +52,24 @@ def lpips_distance(pred: np.ndarray, target: np.ndarray) -> float:
     with torch.no_grad():
         dist = model(_to_lpips_tensor(pred), _to_lpips_tensor(target))
     return float(dist.item())
+
+
+def load_result_rows(csv_path: Path) -> list[dict]:
+    """Load a per-triplet PSNR/SSIM/LPIPS results CSV -- as written by
+    evaluate_baseline.py/evaluate_film.py -- back into float rows, or []
+    if the file doesn't exist yet (e.g. a subset that hasn't been run)."""
+    if not csv_path.exists():
+        return []
+    with csv_path.open(newline="") as f:
+        return [
+            {
+                "triplet": r["triplet"],
+                "psnr": float(r["psnr"]),
+                "ssim": float(r["ssim"]),
+                "lpips": float(r["lpips"]),
+            }
+            for r in csv.DictReader(f)
+        ]
 
 
 def summarize(rows: list[dict]) -> tuple[float, float, float]:
