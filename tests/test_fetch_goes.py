@@ -87,3 +87,28 @@ def test_download_range_downloads_every_listed_scan(monkeypatch, tmp_path):
     assert len(paths) == 2
     assert all(p.exists() for p in paths)
     assert len(client.downloaded) == 2
+
+
+def test_download_range_downloads_concurrently_and_keeps_key_order(monkeypatch, tmp_path):
+    # 12 scans across 2 hours -- enough that a small thread pool must
+    # actually run several downloads at once, not just enqueue them.
+    keys = [
+        f"ABI-L1b-RadF/2024/100/12/OR_ABI-L1b-RadF-M6C13_G16_s2024100120{i:02d}06_e1_c1.nc"
+        for i in range(6)
+    ] + [
+        f"ABI-L1b-RadF/2024/100/13/OR_ABI-L1b-RadF-M6C13_G16_s2024100130{i:02d}06_e1_c1.nc"
+        for i in range(6)
+    ]
+    client = FakeS3Client(keys)
+    monkeypatch.setattr(fetch_goes, "_client", lambda: client)
+
+    paths = fetch_goes.download_range(
+        datetime(2024, 4, 9, 12), datetime(2024, 4, 9, 13), band=13, dest_dir=tmp_path, max_workers=4
+    )
+
+    assert len(paths) == 12
+    assert all(p.exists() for p in paths)
+    assert len(client.downloaded) == 12
+    # pool.map preserves input order in its output even though workers
+    # finish out of order, so paths must line up with the sorted key list.
+    assert [p.name for p in paths] == [Path(k).name for k in sorted(keys)]
