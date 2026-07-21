@@ -46,6 +46,21 @@ def test_dataset_raises_when_no_triplets_found(tmp_path):
         TripletDataset(tmp_path)
 
 
+def test_dataset_getitem_raises_clearly_when_edge_frame_is_missing(tmp_path):
+    # Passes the constructor's t.png-only filter, but t-1.png is missing --
+    # this used to fail deep inside _to_rgb_tensor with a confusing error
+    # on None; now it should raise a clear FileNotFoundError instead.
+    triplet_dir = tmp_path / "triplet_0000"
+    triplet_dir.mkdir()
+    cv2.imwrite(str(triplet_dir / "t.png"), np.zeros((64, 64), dtype=np.uint8))
+    cv2.imwrite(str(triplet_dir / "t+1.png"), np.zeros((64, 64), dtype=np.uint8))
+
+    ds = TripletDataset(tmp_path)
+
+    with pytest.raises(FileNotFoundError, match="Missing t-1/t/t\\+1.png"):
+        ds[0]
+
+
 @pytest.mark.skipif(
     not TRIPLETS_DIR.exists(),
     reason="no extracted triplets -- run fetch_goes.py + extract_triplets.py first",
