@@ -12,6 +12,7 @@ visible band, which matters on a free-tier compute budget.
 from __future__ import annotations
 
 import argparse
+from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timedelta
 from pathlib import Path
 
@@ -60,10 +61,22 @@ def download(key: str, dest_dir: Path, client=None) -> Path:
     return dest
 
 
-def download_range(start: datetime, end: datetime, band: int, dest_dir: Path) -> list[Path]:
+def download_range(start: datetime, end: datetime, band: int, dest_dir: Path, max_workers: int = 8) -> list[Path]:
+    # One scan at a time was badly latency-bound in practice (each request
+    # pays a full round trip before the next starts) -- boto3 clients are
+    # safe to share across threads, and S3 has no issue serving many
+    # unsigned GETs to the same bucket concurrently, so a small thread pool
+    # turns this from request-latency-bound into bandwidth-bound.
     client = _client()
     keys = list_scans_range(start, end, band)
-    return [download(key, dest_dir, client) for key in tqdm(keys, desc=f"band {band}")]
+    with ThreadPoolExecutor(max_workers=max_workers) as pool:
+        return list(
+            tqdm(
+                pool.map(lambda key: download(key, dest_dir, client), keys),
+                total=len(keys),
+                desc=f"band {band}",
+            )
+        )
 
 
 if __name__ == "__main__":
@@ -72,9 +85,10 @@ if __name__ == "__main__":
     parser.add_argument("--end", required=True, help="UTC end, e.g. 2024-04-09T14:00")
     parser.add_argument("--band", type=int, default=13, help="ABI channel number (default 13, clean IR)")
     parser.add_argument("--out", default="data/raw", help="output directory")
+    parser.add_argument("--max-workers", type=int, default=8, help="concurrent download threads")
     args = parser.parse_args()
 
     start = datetime.fromisoformat(args.start)
     end = datetime.fromisoformat(args.end)
-    paths = download_range(start, end, args.band, Path(args.out))
+    paths = download_range(start, end, args.band, Path(args.out), max_workers=args.max_workers)
     print(f"Downloaded {len(paths)} files to {args.out}")
