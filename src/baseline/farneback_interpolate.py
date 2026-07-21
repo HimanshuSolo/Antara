@@ -29,12 +29,14 @@ def interpolate_middle_frame(frame_prev: np.ndarray, frame_next: np.ndarray) -> 
     warps both frames toward the midpoint, then blends -- averaging fills
     in occlusion holes a single-direction warp would leave uncovered.
     """
+    # cv2's stubs don't have an overload for flow=None (compute a fresh
+    # field) even though it's valid and exactly what the docs recommend.
     flow_fwd = cv2.calcOpticalFlowFarneback(
         frame_prev, frame_next, None, 0.5, 3, 15, 3, 5, 1.2, 0
-    )
+    )  # type: ignore[call-overload]
     flow_bwd = cv2.calcOpticalFlowFarneback(
         frame_next, frame_prev, None, 0.5, 3, 15, 3, 5, 1.2, 0
-    )
+    )  # type: ignore[call-overload]
 
     warped_from_prev = _warp(frame_prev, flow_fwd * 0.5)
     warped_from_next = _warp(frame_next, flow_bwd * 0.5)
