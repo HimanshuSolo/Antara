@@ -17,18 +17,21 @@ export default function ResultsPage() {
   return (
     <div className="container section">
       <div className="section-label">Results</div>
-      <h1>Calm weather holds up for both. Cyclones don&apos;t.</h1>
+      <h1>Evaluation results</h1>
       <p className="lede">
-        Every number below comes from real GOES-16 radiance data pulled from NOAA&apos;s public
-        archive — no synthetic or held-in data anywhere in this pipeline.
+        All figures below are derived from real GOES-16 radiance data obtained from
+        NOAA&apos;s public archive. No synthetic or held-in data is used at any stage of this
+        pipeline.
       </p>
 
       <section className="section--tight">
-        <h2>Calm vs. cyclone (headline result)</h2>
+        <h2>Stratified evaluation: calm vs. cyclone conditions</h2>
         <p className="prose">
-          Farneback drops 6.46 dB PSNR going from calm to cyclone conditions; FILM drops only
-          4.56 dB and its SSIM/LPIPS barely move — the degrade-sharply-vs-hold-up split the ISRO
-          problem statement predicts.
+          The Farneback baseline shows a 6.46 dB drop in PSNR when moving from calm to cyclone
+          conditions, while FILM shows a smaller drop of only 4.56 dB, with SSIM and LPIPS
+          remaining largely stable. This confirms the hypothesis underlying the ISRO problem
+          statement: classical interpolation degrades sharply under fast, non-linear motion,
+          while the learned model remains robust.
         </p>
         <PsnrBarChart />
         <div style={{ marginTop: "2rem" }}>
@@ -49,16 +52,17 @@ export default function ResultsPage() {
           />
         </div>
         <p className="caveat">
-          Run against the full-scale Colab fine-tuned checkpoint (52 calm / 28 cyclone triplets).
+          Evaluated using the full-scale, Colab-fine-tuned checkpoint across 52 calm and 28
+          cyclone triplets.
         </p>
       </section>
 
       <section className="section--tight">
         <h2>Zero-shot transfer</h2>
         <p className="prose">
-          Running the pretrained FILM checkpoint as-is — zero satellite-specific training —
-          already outperforms the classical baseline, confirming the architecture transfers to
-          satellite imagery before any fine-tuning investment.
+          The pretrained FILM checkpoint, applied without any satellite-specific training,
+          already outperforms the classical baseline. This confirms that the architecture
+          transfers effectively to satellite imagery prior to any fine-tuning.
         </p>
         <ResultsTable
           columns={["Method", "PSNR (dB)", "SSIM"]}
@@ -72,9 +76,9 @@ export default function ResultsPage() {
       <section className="section--tight">
         <h2>Fine-tuning proof of concept</h2>
         <p className="prose">
-          46 real triplets from a contiguous 8-hour GOES-16 window, split chronologically into a
-          38-triplet fine-tuning pool and an 8-triplet held-out test set excluded from
-          fine-tuning entirely.
+          This proof of concept uses 46 real triplets from a contiguous 8-hour GOES-16 window,
+          split chronologically into a 38-triplet fine-tuning pool and an 8-triplet held-out
+          test set that is excluded from fine-tuning entirely.
         </p>
         <ResultsTable
           columns={["Method", "PSNR (dB)", "SSIM"]}
@@ -84,17 +88,19 @@ export default function ResultsPage() {
           }))}
         />
         <p className="caveat">
-          Small-scale (31 training triplets, 5 epochs on CPU) — see the full-scale GPU run below.
+          Small-scale run: 31 training triplets, 5 epochs, CPU only. See the full-scale GPU run
+          below.
         </p>
       </section>
 
       <section className="section--tight">
         <h2>Full-scale fine-tuning (Colab GPU)</h2>
         <p className="prose">
-          30 epochs on 207 triplets pooled from 3 GOES-16 days, evaluated on a 4th day never seen
-          during fine-tuning — the core contribution. Fine-tuning improves PSNR/SSIM over
-          zero-shot on this fully disjoint test day; LPIPS ticks up slightly, a real (small)
-          perceptual-vs-pixel trade-off rather than a straight win on every metric.
+          This is the core result of the project: fine-tuning for 30 epochs on 207 triplets
+          pooled from 3 GOES-16 days, evaluated on a 4th, fully disjoint day never seen during
+          training. Fine-tuning improves PSNR and SSIM over the zero-shot baseline; LPIPS
+          increases marginally, reflecting a small perceptual-versus-pixel trade-off rather than
+          a uniform improvement across all metrics.
         </p>
         <ResultsTable
           columns={["Method", "PSNR (dB)", "SSIM", "LPIPS"]}
@@ -104,16 +110,17 @@ export default function ResultsPage() {
           }))}
         />
         <p className="caveat">
-          Run for real in <code>notebooks/finetune_on_colab.ipynb</code> on a Colab T4 GPU.
+          Executed in <code>notebooks/finetune_on_colab.ipynb</code> on a Colab T4 GPU.
         </p>
       </section>
 
       <section className="section--tight">
         <h2>Patch-size ablation</h2>
         <p className="prose">
-          FILM&apos;s PSNR/SSIM barely move across a 16× range in patch area (128px → 512px) — it
-          isn&apos;t relying on extra spatial context. Farneback improves somewhat with more
-          context but stays well below FILM at every size.
+          FILM&apos;s PSNR and SSIM remain nearly constant across a 16&times; range in patch area
+          (128px to 512px), indicating that the model does not depend on additional spatial
+          context. Farneback improves modestly with more context but remains well below FILM at
+          every patch size.
         </p>
         <ResultsTable
           columns={["Size", "Method", "PSNR (dB)", "SSIM", "LPIPS"]}
