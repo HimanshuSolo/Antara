@@ -104,3 +104,78 @@ def test_generate_404s_for_unknown_item(monkeypatch):
     resp = _client().post("/api/gallery/nonexistent/generate")
 
     assert resp.status_code == 404
+
+
+def test_generate_loop_returns_gif_with_correct_frame_count(tmp_path, monkeypatch):
+    item_dir = tmp_path / "item"
+    _write_triplet(item_dir)
+    monkeypatch.setattr(
+        gallery, "GALLERY_ITEMS", [{"id": "item", "label": "Item", "subset": "calm", "dir": item_dir}]
+    )
+    gallery._loop_cache.clear()
+
+    model_path = tmp_path / "model.pt"
+    model_path.write_bytes(b"fake")
+    monkeypatch.setattr("src.api.live.resolve_model_path", lambda: model_path)
+    monkeypatch.setattr(
+        "src.deep.film_interpolate.interpolate_multi",
+        lambda a, b, path, num_frames=3, device=None: [_fake_frame(90 + i) for i in range(num_frames)],
+    )
+
+    resp = _client().post("/api/gallery/item/loop?num_frames=4")
+
+    assert resp.status_code == 200
+    body = resp.json()
+    assert body["num_frames"] == 4
+    assert body["model"] == "model.pt"
+    assert body["loop_gif"].startswith("data:image/gif;base64,")
+
+    import base64
+    from PIL import Image
+    import io
+
+    gif_bytes = base64.b64decode(body["loop_gif"].split(",", 1)[1])
+    im = Image.open(io.BytesIO(gif_bytes))
+    assert im.n_frames == 6  # t-1, 4 interpolated, t+1
+
+
+def test_generate_loop_caches_by_item_model_and_num_frames(tmp_path, monkeypatch):
+    item_dir = tmp_path / "item"
+    _write_triplet(item_dir)
+    monkeypatch.setattr(
+        gallery, "GALLERY_ITEMS", [{"id": "item", "label": "Item", "subset": "calm", "dir": item_dir}]
+    )
+    gallery._loop_cache.clear()
+
+    model_path = tmp_path / "model.pt"
+    model_path.write_bytes(b"fake")
+    monkeypatch.setattr("src.api.live.resolve_model_path", lambda: model_path)
+
+    calls = []
+
+    def fake_interpolate_multi(a, b, path, num_frames=3, device=None):
+        calls.append(num_frames)
+        return [_fake_frame(90) for _ in range(num_frames)]
+
+    monkeypatch.setattr("src.deep.film_interpolate.interpolate_multi", fake_interpolate_multi)
+
+    client = _client()
+    client.post("/api/gallery/item/loop?num_frames=3")
+    client.post("/api/gallery/item/loop?num_frames=3")
+    client.post("/api/gallery/item/loop?num_frames=5")
+
+    assert calls == [3, 5]
+
+
+def test_generate_loop_404s_for_unknown_item(monkeypatch):
+    monkeypatch.setattr(gallery, "GALLERY_ITEMS", [])
+
+    resp = _client().post("/api/gallery/nonexistent/loop")
+
+    assert resp.status_code == 404
+
+
+def test_generate_loop_422s_for_invalid_num_frames():
+    resp = _client().post("/api/gallery/anything/loop?num_frames=15")
+
+    assert resp.status_code == 422
