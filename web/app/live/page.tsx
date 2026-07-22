@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Gallery from "@/components/Gallery";
 import LivePipeline from "@/components/LivePipeline";
 
 export const metadata: Metadata = {
@@ -26,6 +27,21 @@ export default function LivePage() {
         contain a FILM checkpoint — see the root README&apos;s Setup section). See{" "}
         <code>web/README.md</code> for details.
       </p>
+
+      <div className="section--tight" style={{ marginTop: "3.5rem" }}>
+        <div className="section-label">Gallery</div>
+        <h2>Real cyclone and calm-weather pairs, generated on demand.</h2>
+        <p className="prose">
+          These (t&minus;1, t+1) pairs are curated from real GOES-16 events — Hurricane
+          Milton&apos;s eyewall in 2024, and calm off-season weather for comparison — via{" "}
+          <code>src/api/gallery.py</code>. Nothing runs until you click Generate: that
+          request triggers the real Farneback + FILM pipeline for that pair. Unlike the
+          pipeline above, these triplets have a real ground-truth middle frame on disk, so
+          each result comes back with genuine PSNR/SSIM/LPIPS accuracy numbers, not just a
+          plausible-looking guess.
+        </p>
+        <Gallery />
+      </div>
     </div>
   );
 }
