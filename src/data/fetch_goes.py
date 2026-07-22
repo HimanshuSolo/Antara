@@ -1,13 +1,21 @@
-"""Fetch GOES-16 ABI-L1b Radiance (Full Disk) NetCDF scans from NOAA's
-public AWS Open Data bucket -- no credentials needed (unsigned requests).
+"""Fetch GOES ABI-L1b Radiance (Full Disk) NetCDF scans from NOAA's public
+AWS Open Data buckets -- no credentials needed (unsigned requests).
 
-Bucket layout:
-  ABI-L1b-RadF/<year>/<day_of_year>/<hour>/OR_ABI-L1b-RadF-M6C<band>_G16_s<start>_e<end>_c<created>.nc
+Bucket layout (same across noaa-goes16/18/19):
+  ABI-L1b-RadF/<year>/<day_of_year>/<hour>/OR_ABI-L1b-RadF-M6C<band>_G<sat>_s<start>_e<end>_c<created>.nc
 
-Scans are ~10 minutes apart for GOES-16 full-disk mode 6. Band 13 (clean
-longwave IR, ~10.3um) is used by default: it works day and night (unlike
-visible bands) and is ~25MB/scan vs. ~300MB+ for the high-resolution
-visible band, which matters on a free-tier compute budget.
+Scans are ~10 minutes apart for full-disk mode 6. Band 13 (clean longwave
+IR, ~10.3um) is used by default: it works day and night (unlike visible
+bands) and is ~25MB/scan vs. ~300MB+ for the high-resolution visible band,
+which matters on a free-tier compute budget.
+
+GOES-16 was this project's original data source and is what every
+existing dataset/checkpoint here was built from, so it stays the default
+bucket for reproducibility -- but GOES-16 stopped operating as GOES-East
+on 2025-04-07 (superseded by GOES-19; see `noaa-goes19`), so it no longer
+has new data. `latest_scan_pair`, used by the live pipeline API
+(`src/api/live.py`), is pointed at `noaa-goes19` explicitly for that
+reason.
 """
 from __future__ import annotations
 
@@ -23,19 +31,23 @@ from tqdm import tqdm
 
 BUCKET = "noaa-goes16"
 
+# current operational GOES-East feed (GOES-16's successor) -- see the
+# module docstring. This is what a genuinely "live" fetch must use.
+LIVE_BUCKET = "noaa-goes19"
+
 
 def _client():
     return boto3.client("s3", config=Config(signature_version=UNSIGNED))
 
 
-def list_scans(dt: datetime, band: int, client=None) -> list[str]:
+def list_scans(dt: datetime, band: int, client=None, bucket: str = BUCKET) -> list[str]:
     """List all full-disk scan keys for `band` within `dt`'s hour."""
     client = client or _client()
     prefix = (
         f"ABI-L1b-RadF/{dt.year}/{dt.timetuple().tm_yday:03d}/{dt.hour:02d}/"
         f"OR_ABI-L1b-RadF-M6C{band:02d}"
     )
-    resp = client.list_objects_v2(Bucket=BUCKET, Prefix=prefix)
+    resp = client.list_objects_v2(Bucket=bucket, Prefix=prefix)
     return sorted(obj["Key"] for obj in resp.get("Contents", []))
 
 
@@ -50,15 +62,41 @@ def list_scans_range(start: datetime, end: datetime, band: int) -> list[str]:
     return keys
 
 
-def download(key: str, dest_dir: Path, client=None) -> Path:
+def download(key: str, dest_dir: Path, client=None, bucket: str = BUCKET) -> Path:
     """Download a single scan to `dest_dir`, skipping if already present."""
     client = client or _client()
     dest_dir.mkdir(parents=True, exist_ok=True)
     dest = dest_dir / Path(key).name
     if dest.exists():
         return dest
-    client.download_file(BUCKET, key, str(dest))
+    client.download_file(bucket, key, str(dest))
     return dest
+
+
+def latest_scan_pair(
+    band: int = 13, now: datetime | None = None, client=None, bucket: str = LIVE_BUCKET
+) -> tuple[str, str]:
+    """Return the two most recently published full-disk scan keys for `band`.
+
+    There is no real frame *between* these two yet -- that gap is exactly
+    what this project's interpolation methods fill in, which makes this
+    pair the input for a genuinely "live" demo rather than a canned one.
+    Falls back to the previous hour's listing when the current hour hasn't
+    published two scans yet (e.g. near the top of the hour). Defaults to
+    `LIVE_BUCKET` (GOES-19, the current operational satellite) rather than
+    `BUCKET` (GOES-16, retired 2025-04-07 -- see the module docstring).
+    """
+    client = client or _client()
+    now = now or datetime.utcnow()
+
+    keys = list_scans(now, band, client, bucket=bucket)
+    if len(keys) < 2:
+        keys = list_scans(now - timedelta(hours=1), band, client, bucket=bucket) + keys
+    keys = sorted(keys)
+
+    if len(keys) < 2:
+        raise RuntimeError(f"Fewer than 2 recent band {band} scans found near {now.isoformat()}")
+    return keys[-2], keys[-1]
 
 
 def download_range(start: datetime, end: datetime, band: int, dest_dir: Path, max_workers: int = 8) -> list[Path]:
