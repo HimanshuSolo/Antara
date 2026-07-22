@@ -224,6 +224,20 @@ function GalleryCard({ item }: { item: GalleryItem }) {
                   {loop.num_frames}&times; FILM-interpolated frames between the two real
                   scans, generated in {loop.processing_seconds.toFixed(1)}s.
                 </p>
+                {loop.loop_mp4 ? (
+                  <a
+                    className="btn btn--secondary"
+                    style={{ marginTop: "0.5rem", display: "inline-block" }}
+                    href={loop.loop_mp4}
+                    download={`${item.id}-satellite-loop.mp4`}
+                  >
+                    Download MP4
+                  </a>
+                ) : (
+                  <p className="caveat" style={{ marginTop: "0.5rem" }}>
+                    MP4 download unavailable &mdash; the API server has no ffmpeg installed.
+                  </p>
+                )}
               </div>
             )}
           </div>
