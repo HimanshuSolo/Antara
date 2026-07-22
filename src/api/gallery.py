@@ -18,6 +18,7 @@ import shutil
 import subprocess
 import tempfile
 import time
+from datetime import datetime, timezone
 from pathlib import Path
 
 import cv2
@@ -26,6 +27,7 @@ from fastapi import APIRouter, HTTPException
 from PIL import Image
 from pydantic import BaseModel
 
+from src.api.report import build_report_pdf
 from src.baseline.farneback_interpolate import interpolate_middle_frame as farneback_interpolate
 from src.deep.film_interpolate import interpolate_middle_frame as film_interpolate
 from src.eval.metrics import lpips_distance, psnr, ssim
@@ -105,6 +107,12 @@ class LoopResult(BaseModel):
     num_frames: int
     processing_seconds: float
     model: str
+
+
+class ReportResult(BaseModel):
+    id: str
+    report_pdf: str
+    generated_at: str
 
 
 def encode_png(img: np.ndarray) -> str:
@@ -271,3 +279,42 @@ def generate_loop(item_id: str, num_frames: int = 5) -> LoopResult:
     )
     _loop_cache[cache_key] = result
     return result
+
+
+@router.post("/api/gallery/{item_id}/report", response_model=ReportResult)
+def generate_report(item_id: str) -> ReportResult:
+    """Real-world usage endpoint: a downloadable, one-page PDF summary of
+    this triplet's Farneback vs. FILM comparison -- the kind of artifact
+    an analyst would archive or attach to an incident report, not just
+    view on a live web page. Reuses generate()'s cache, so this doesn't
+    rerun the pipeline if the single-frame result already exists."""
+    item = _find_item(item_id)
+    result = generate(item_id)
+
+    frames = load_triplet_frames(item["dir"])
+    if frames is None:
+        raise HTTPException(status_code=404, detail=f"Triplet data missing for '{item_id}'")
+    frame_prev, _frame_mid, frame_next = frames
+
+    pdf_bytes = build_report_pdf(
+        label=item["label"],
+        subset=item["subset"],
+        model=result.model,
+        frame_prev=encode_png(frame_prev),
+        frame_next=encode_png(frame_next),
+        ground_truth=result.ground_truth,
+        farneback_mid=result.farneback_mid,
+        film_mid=result.film_mid,
+        farneback_psnr=result.farneback_psnr,
+        farneback_ssim=result.farneback_ssim,
+        farneback_lpips=result.farneback_lpips,
+        film_psnr=result.film_psnr,
+        film_ssim=result.film_ssim,
+        film_lpips=result.film_lpips,
+    )
+
+    return ReportResult(
+        id=item_id,
+        report_pdf="data:application/pdf;base64," + base64.b64encode(pdf_bytes).decode("ascii"),
+        generated_at=datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC"),
+    )
