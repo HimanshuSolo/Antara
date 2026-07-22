@@ -17,7 +17,7 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Antara — Satellite Temporal Super-Resolution",
   description:
-    "Filling in the frames between geostationary satellite scans with a learned, optical-flow-based method — and showing where it holds up better than classical interpolation on fast, non-linear cloud motion.",
+    "A deep learning approach to temporal super-resolution of geostationary satellite imagery, synthesizing missing frames via optical-flow-based interpolation and evaluating its advantage over classical methods under fast, non-linear cloud motion.",
 };
 
 export default function RootLayout({
