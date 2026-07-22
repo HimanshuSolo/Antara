@@ -27,3 +27,6 @@ lpips
 fastapi
 uvicorn[standard]
 httpx  # fastapi.testclient.TestClient, used in tests/api/
+
+# animated satellite-loop GIF assembly (src/api/gallery.py's loop endpoint)
+Pillow
