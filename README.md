@@ -52,16 +52,16 @@ on fast, non-linear cloud dynamics.
 
       | Subset  | Method     | PSNR    | SSIM   | LPIPS  |
       |---------|------------|---------|--------|--------|
-      | calm    | Farneback  | 31.44 dB | 0.823 | 0.103 |
-      | calm    | FILM       | 36.88 dB | 0.917 | 0.041 |
-      | cyclone | Farneback  | 24.98 dB | 0.729 | 0.125 |
-      | cyclone | FILM       | 32.05 dB | 0.932 | 0.044 |
+      | calm    | Farneback  | 31.44 dB | 0.8227 | 0.1029 |
+      | calm    | FILM       | 36.62 dB | 0.9117 | 0.0472 |
+      | cyclone | Farneback  | 24.98 dB | 0.7292 | 0.1250 |
+      | cyclone | FILM       | 32.06 dB | 0.9310 | 0.0505 |
 
       Farneback drops 6.46 dB PSNR going from calm to cyclone conditions;
-      FILM drops only 4.83 dB and its SSIM/LPIPS barely move — the
+      FILM drops only 4.56 dB and its SSIM/LPIPS barely move — the
       degrade-sharply-vs-hold-up split the ISRO problem statement predicts.
-      Uses the small-scale CPU checkpoint, not yet re-run against the
-      full-scale Colab checkpoint above.
+      Run against the full-scale Colab checkpoint above (52 calm / 28
+      cyclone triplets).
 - [x] Patch-size ablation (`src/eval/ablate_patch_size.py`), run on 46 real
       GOES-16 triplets at 128/256/512px against the pretrained checkpoint:
 
