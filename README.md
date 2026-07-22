@@ -131,6 +131,17 @@ on fast, non-linear cloud dynamics.
       these triplets have a real ground-truth middle frame on disk, so
       the response includes genuine PSNR/SSIM/LPIPS for both methods, not
       just images.
+- [x] Satellite loop endpoint (stretch, real-world usage): `POST
+      /api/gallery/{id}/loop` reuses `interpolate_multi()` to generate
+      several evenly-spaced FILM frames between the real t-1 and t+1
+      scans, then assembles `[t-1, ...interpolated, t+1]` into a single
+      looping GIF with Pillow -- a higher-effective-frame-rate satellite
+      motion loop, the actual format forecasters watch to track storm
+      motion (e.g. the National Hurricane Center's animated loops),
+      rather than a single static comparison frame. The `Gallery`
+      component's "Generate satellite loop" button calls it after the
+      single-frame result. Run for real against the Milton eyewall
+      triplets: 5 interpolated frames end to end in ~7s on CPU.
 - [ ] INSAT-3D/3DR validation via MOSDAC (stretch).
 
 See the full plan and rationale for each step at
