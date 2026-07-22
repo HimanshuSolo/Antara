@@ -32,6 +32,18 @@ export type GenerateResult = {
   model: string;
 };
 
+// A real-world usage endpoint: assembles t-1, N FILM-interpolated
+// intermediate frames, and t+1 into a single looping GIF -- a higher
+// effective frame-rate satellite motion loop, the format forecasters
+// actually watch to track storm motion, rather than one static frame.
+export type LoopResult = {
+  id: string;
+  loop_gif: string;
+  num_frames: number;
+  processing_seconds: number;
+  model: string;
+};
+
 async function unwrap<T>(res: Response): Promise<T> {
   if (!res.ok) {
     const body = await res.json().catch(() => null);
@@ -46,4 +58,12 @@ export async function fetchGallery(): Promise<GalleryItem[]> {
 
 export async function generateGalleryItem(id: string): Promise<GenerateResult> {
   return unwrap(await fetch(`${LIVE_API_URL}/api/gallery/${id}/generate`, { method: "POST" }));
+}
+
+export async function generateGalleryLoop(id: string, numFrames = 5): Promise<LoopResult> {
+  return unwrap(
+    await fetch(`${LIVE_API_URL}/api/gallery/${id}/loop?num_frames=${numFrames}`, {
+      method: "POST",
+    }),
+  );
 }
