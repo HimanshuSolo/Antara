@@ -150,7 +150,7 @@ since this dataset has ground truth solely at the true midpoint."""
 
 CONCLUSION_TEXT = """The headline result confirms the hypothesis the ISRO problem statement
 predicts: Farneback's PSNR drops 6.46 dB going from the calm subset to
-the cyclone subset, while FILM's drops only 4.83 dB and its SSIM/LPIPS
+the cyclone subset, while FILM's drops only 4.56 dB and its SSIM/LPIPS
 barely move -- the fast, non-linear motion in cyclone frame pairs is
 exactly where the classical linear-warp assumption breaks down and a
 learned model doesn't. This holds even before satellite-specific
@@ -165,17 +165,18 @@ while Farneback improves somewhat with more spatial context but never
 closes the gap -- consistent with FILM learning motion synthesis rather
 than only locally-windowed flow.
 
-**Limitations and future work.** The fine-tuning numbers above come from
-a small-scale, CPU-only proof of concept (31 training triplets, 5
-epochs, one 8-hour GOES-16 window) -- real signal (train/val loss both
-fell monotonically), but nowhere near the data volume or epoch count a
-~34M-parameter video model needs to show its full potential on this
-domain. `notebooks/finetune_on_colab.ipynb` reuses this project's
-pipeline unmodified to fine-tune across multiple disjoint GOES-16 days
-on a free Colab/Kaggle GPU and is ready to run; the stratified and
-ablation results above should be rerun against that checkpoint once it
-exists, since that is the number this project is ultimately trying to
-report. INSAT-3D/3DR validation via ISRO's MOSDAC portal remains
+**Limitations and future work.** The fine-tuning proof of concept
+earlier in this report was small-scale and CPU-only (31 training
+triplets, 5 epochs, one 8-hour GOES-16 window) -- real signal (train/val
+loss both fell monotonically), but nowhere near the data volume or
+epoch count a ~34M-parameter video model needs to show its full
+potential on this domain. `notebooks/finetune_on_colab.ipynb` reuses
+this project's pipeline unmodified and was run for real on a free Colab
+T4 GPU: 30 epochs across 3 disjoint GOES-16 days, evaluated on a 4th day
+never seen during fine-tuning (33.25 dB / 0.9314 SSIM vs. 32.66 dB /
+0.9242 SSIM zero-shot). The stratified calm/cyclone comparison above is
+run against that full-scale checkpoint, which is the number this
+project set out to report. INSAT-3D/3DR validation via ISRO's MOSDAC portal remains
 unattempted -- registration/access lead time put it outside this
 project's timeline -- so every result here is on GOES-16 (and, via the
 same code path, Himawari-8/9), not yet the satellite the problem
