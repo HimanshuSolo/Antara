@@ -7,6 +7,7 @@ const LINKS = [
   { href: "/", label: "Overview" },
   { href: "/results", label: "Results" },
   { href: "/demo", label: "Demo" },
+  { href: "/live", label: "Live" },
 ];
 
 export default function SiteHeader() {
