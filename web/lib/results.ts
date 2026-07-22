@@ -52,6 +52,15 @@ export const finetuneProofOfConcept: MethodResult[] = [
   { method: "FILM, fine-tuned (5 epochs, 31 triplets, CPU)", psnr: 28.7, ssim: 0.82, lpips: NaN },
 ];
 
+// notebooks/finetune_on_colab.ipynb, run for real on a Colab T4 GPU: 30
+// epochs on 207 triplets pooled from 3 GOES-16 days, evaluated on a 4th day
+// never seen during fine-tuning. The core contribution.
+export const finetuneFullScale: MethodResult[] = [
+  { method: "Farneback (classical)", psnr: 26.6, ssim: 0.6999, lpips: 0.1324 },
+  { method: "FILM, pretrained (zero-shot)", psnr: 32.66, ssim: 0.9242, lpips: 0.0371 },
+  { method: "FILM, fine-tuned (30 epochs, 207 triplets, GPU)", psnr: 33.25, ssim: 0.9314, lpips: 0.0595 },
+];
+
 // src/eval/ablate_patch_size.py, run on 46 real GOES-16 triplets against
 // the pretrained checkpoint.
 export type PatchSizeRow = {
