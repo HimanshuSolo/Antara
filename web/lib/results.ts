@@ -17,21 +17,21 @@ export type StratifiedSubset = {
   results: MethodResult[];
 };
 
-// src/eval/evaluate_stratified.py, run against the small-scale fine-tuned
-// checkpoint (52 calm / 28 cyclone triplets).
+// src/eval/evaluate_stratified.py, run against the full-scale Colab
+// fine-tuned checkpoint (52 calm / 28 cyclone triplets).
 export const stratifiedResults: StratifiedSubset[] = [
   {
     subset: "calm",
     results: [
-      { method: "Farneback", psnr: 31.44, ssim: 0.823, lpips: 0.103 },
-      { method: "FILM", psnr: 36.88, ssim: 0.917, lpips: 0.041 },
+      { method: "Farneback", psnr: 31.44, ssim: 0.8227, lpips: 0.1029 },
+      { method: "FILM", psnr: 36.62, ssim: 0.9117, lpips: 0.0472 },
     ],
   },
   {
     subset: "cyclone",
     results: [
-      { method: "Farneback", psnr: 24.98, ssim: 0.729, lpips: 0.125 },
-      { method: "FILM", psnr: 32.05, ssim: 0.932, lpips: 0.044 },
+      { method: "Farneback", psnr: 24.98, ssim: 0.7292, lpips: 0.125 },
+      { method: "FILM", psnr: 32.06, ssim: 0.931, lpips: 0.0505 },
     ],
   },
 ];
@@ -81,10 +81,10 @@ export const patchSizeAblation: PatchSizeRow[] = [
 ];
 
 export const headlineStats = [
-  { value: "36.9 dB", label: "FILM PSNR, calm weather" },
+  { value: "36.6 dB", label: "FILM PSNR, calm weather" },
   { value: "32.1 dB", label: "FILM PSNR, cyclone" },
   { value: "6.46 dB", label: "Farneback's calm→cyclone drop" },
-  { value: "4.83 dB", label: "FILM's calm→cyclone drop" },
+  { value: "4.56 dB", label: "FILM's calm→cyclone drop" },
 ];
 
 // This single real cyclone triplet's Farneback/FILM predictions, rendered
