@@ -28,8 +28,20 @@ on fast, non-linear cloud dynamics.
       set, vs. 27.8 dB / 0.80 SSIM zero-shot on the same set. Small-scale (31
       training triplets, 5 epochs) -- see `docs/PLAN.md` for what's left.
 - [x] GPU support added to fine-tuning/inference (`--device`, auto-detects cuda).
-- [ ] Full fine-tuning run on more data on a Colab/Kaggle GPU — see
-      `notebooks/finetune_on_colab.ipynb`, ready to run. The core contribution.
+- [x] Full fine-tuning run on a Colab T4 GPU — `notebooks/finetune_on_colab.ipynb`,
+      run for real: 30 epochs on 207 triplets pooled from 3 GOES-16 days
+      (2024-04-09, 2024-04-11, 2024-04-14), evaluated on a 4th day
+      (2024-04-19) never seen during fine-tuning. The core contribution:
+
+      | Method                        | PSNR    | SSIM   | LPIPS  |
+      |-------------------------------|---------|--------|--------|
+      | Farneback (classical)         | 26.60 dB | 0.6999 | 0.1324 |
+      | FILM pretrained (zero-shot)   | 32.66 dB | 0.9242 | 0.0371 |
+      | FILM fine-tuned (full run)    | 33.25 dB | 0.9314 | 0.0595 |
+
+      Fine-tuning improves PSNR/SSIM over zero-shot on a fully disjoint test
+      day; LPIPS ticks up slightly, a real (small) perceptual-vs-pixel
+      trade-off rather than a straight win on every metric.
 - [x] Cyclone/calm evaluation split via IBTrACS: `build_cyclone_dataset.py`
       finds a named storm's peak position and pulls GOES-16 scans centered on
       it; `build_calm_dataset.py` pulls the same geographic crop from an
@@ -48,8 +60,8 @@ on fast, non-linear cloud dynamics.
       Farneback drops 6.46 dB PSNR going from calm to cyclone conditions;
       FILM drops only 4.83 dB and its SSIM/LPIPS barely move — the
       degrade-sharply-vs-hold-up split the ISRO problem statement predicts.
-      Same caveat as the fine-tuning result above: small-scale checkpoint,
-      not yet the full Colab GPU run.
+      Uses the small-scale CPU checkpoint, not yet re-run against the
+      full-scale Colab checkpoint above.
 - [x] Patch-size ablation (`src/eval/ablate_patch_size.py`), run on 46 real
       GOES-16 triplets at 128/256/512px against the pretrained checkpoint:
 
