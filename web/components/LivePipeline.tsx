@@ -1,8 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import BeforeAfterSlider from "@/components/BeforeAfterSlider";
 import { fetchLiveResult, LIVE_API_URL, type LiveResult } from "@/lib/liveApi";
+
+// GOES-19 full-disk scans publish roughly every 10 minutes. Polling this
+// often is cheap: the API caches by scan-pair, so most polls just confirm
+// nothing new has landed yet rather than re-running Farneback/FILM.
+const POLL_INTERVAL_MS = 45_000;
 
 type Status = "idle" | "loading" | "error" | "done";
 
@@ -10,43 +15,88 @@ function formatUtc(iso: string): string {
   return new Date(iso).toUTCString().replace(" GMT", " UTC");
 }
 
+function formatClock(date: Date): string {
+  return date.toLocaleTimeString([], { hour12: false });
+}
+
 export default function LivePipeline() {
   const [status, setStatus] = useState<Status>("idle");
   const [result, setResult] = useState<LiveResult | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [monitoring, setMonitoring] = useState(true);
+  const [lastChecked, setLastChecked] = useState<Date | null>(null);
+  const [justUpdated, setJustUpdated] = useState(false);
+  const resultRef = useRef<LiveResult | null>(null);
 
-  async function run() {
-    setStatus("loading");
-    setError(null);
+  const check = useCallback(async () => {
+    if (!resultRef.current) setStatus("loading");
     try {
       const data = await fetchLiveResult();
+      const isNewPair = data.next_time !== resultRef.current?.next_time;
+      resultRef.current = data;
       setResult(data);
       setStatus("done");
+      setError(null);
+      if (isNewPair) {
+        setJustUpdated(true);
+        setTimeout(() => setJustUpdated(false), 4000);
+      }
     } catch (e) {
       setError(
-        e instanceof Error
-          ? e.message
-          : "Could not reach the live pipeline API.",
+        e instanceof Error ? e.message : "Could not reach the live pipeline API.",
       );
-      setStatus("error");
+      if (!resultRef.current) setStatus("error");
+    } finally {
+      setLastChecked(new Date());
     }
-  }
+  }, []);
+
+  // Runs an initial check on mount, then keeps polling while monitoring is
+  // on. The mount check fires exactly once regardless of `monitoring` so
+  // pausing right away still shows the current scan pair.
+  useEffect(() => {
+    const id = setTimeout(check, 0);
+    return () => clearTimeout(id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+    if (!monitoring) return;
+    const id = setInterval(check, POLL_INTERVAL_MS);
+    return () => clearInterval(id);
+  }, [monitoring, check]);
 
   return (
     <div>
-      <div className="btn-row" style={{ marginTop: "1.5rem" }}>
+      <div className="monitor-status" style={{ marginTop: "1.5rem" }}>
+        <span className={`monitor-dot ${monitoring ? "monitor-dot--live" : ""}`} />
+        <span>
+          {monitoring
+            ? `Live — checking for a new GOES-19 scan pair every ${POLL_INTERVAL_MS / 1000}s`
+            : "Monitoring paused"}
+        </span>
+        {lastChecked && <span>· last checked {formatClock(lastChecked)}</span>}
+      </div>
+
+      <div className="btn-row" style={{ marginTop: "1rem" }}>
         <button
-          className="btn btn--primary"
-          onClick={run}
+          className="btn btn--secondary"
+          onClick={() => setMonitoring((m) => !m)}
+        >
+          {monitoring ? "Pause monitoring" : "Resume monitoring"}
+        </button>
+        <button
+          className="btn btn--secondary"
+          onClick={check}
           disabled={status === "loading"}
         >
-          {status === "loading" ? "Running pipeline…" : "Run pipeline on latest scan"}
+          Check now
         </button>
       </div>
 
       {status === "loading" && (
         <p className="prose" style={{ marginTop: "1.25rem" }}>
-          Downloading the latest published GOES-16 band 13 scans and running Farneback +
+          Downloading the latest published GOES-19 band 13 scans and running Farneback +
           FILM on them — this fetches real data and runs a real model, so it can take
           anywhere from a few seconds to about a minute.
         </p>
@@ -63,8 +113,20 @@ export default function LivePipeline() {
         </div>
       )}
 
+      {status === "done" && error && (
+        <div className="caveat" style={{ marginTop: "1.25rem" }}>
+          Last check failed ({error}) — still showing the most recent successful
+          result below. Retrying automatically.
+        </div>
+      )}
+
       {status === "done" && result && (
         <div style={{ marginTop: "2rem" }}>
+          {justUpdated && (
+            <p className="caveat" style={{ marginTop: 0, marginBottom: "1.5rem" }}>
+              New scan pair just landed — frame regenerated at {formatClock(new Date())}.
+            </p>
+          )}
           <div className="stat-grid">
             <div className="stat">
               <div className="stat__value">{formatUtc(result.prev_time)}</div>
