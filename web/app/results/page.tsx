@@ -27,7 +27,7 @@ export default function ResultsPage() {
         <h2>Calm vs. cyclone (headline result)</h2>
         <p className="prose">
           Farneback drops 6.46 dB PSNR going from calm to cyclone conditions; FILM drops only
-          4.83 dB and its SSIM/LPIPS barely move — the degrade-sharply-vs-hold-up split the ISRO
+          4.56 dB and its SSIM/LPIPS barely move — the degrade-sharply-vs-hold-up split the ISRO
           problem statement predicts.
         </p>
         <PsnrBarChart />
@@ -49,7 +49,7 @@ export default function ResultsPage() {
           />
         </div>
         <p className="caveat">
-          Run against the small-scale fine-tuned checkpoint (52 calm / 28 cyclone triplets).
+          Run against the full-scale Colab fine-tuned checkpoint (52 calm / 28 cyclone triplets).
         </p>
       </section>
 
