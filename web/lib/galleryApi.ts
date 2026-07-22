@@ -47,6 +47,17 @@ export type LoopResult = {
   model: string;
 };
 
+// A real-world usage endpoint: a one-page, downloadable PDF summarizing
+// this triplet's Farneback vs. FILM comparison -- the kind of artifact
+// an analyst would archive or attach to an incident report, not just
+// view on a live web page. Reuses the /generate result if it's already
+// been computed, so this doesn't rerun the model a second time.
+export type ReportResult = {
+  id: string;
+  report_pdf: string;
+  generated_at: string;
+};
+
 async function unwrap<T>(res: Response): Promise<T> {
   if (!res.ok) {
     const body = await res.json().catch(() => null);
@@ -69,4 +80,8 @@ export async function generateGalleryLoop(id: string, numFrames = 5): Promise<Lo
       method: "POST",
     }),
   );
+}
+
+export async function generateGalleryReport(id: string): Promise<ReportResult> {
+  return unwrap(await fetch(`${LIVE_API_URL}/api/gallery/${id}/report`, { method: "POST" }));
 }
