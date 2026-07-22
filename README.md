@@ -141,7 +141,13 @@ on fast, non-linear cloud dynamics.
       rather than a single static comparison frame. The `Gallery`
       component's "Generate satellite loop" button calls it after the
       single-frame result. Run for real against the Milton eyewall
-      triplets: 5 interpolated frames end to end in ~7s on CPU.
+      triplets: 5 interpolated frames end to end in ~7s on CPU. The same
+      response also includes a downloadable H.264 MP4 of the same
+      sequence (encoded via `ffmpeg`'s `libopenh264`, from the same
+      generated frames -- no extra FILM inference) -- smaller and more
+      shareable than the GIF, and the `Gallery` component exposes it as
+      a "Download MP4" link. Degrades gracefully (`loop_mp4: null`) if
+      `ffmpeg` isn't installed on the machine running the API.
 - [ ] INSAT-3D/3DR validation via MOSDAC (stretch).
 
 See the full plan and rationale for each step at
@@ -159,6 +165,11 @@ labeling anywhere in this project.
 python3 -m venv .venv
 .venv/bin/pip install -r requirements.txt
 ```
+
+Optional: install `ffmpeg` (system package, not in `requirements.txt`) to
+enable MP4 downloads from the gallery's satellite-loop endpoint. Without
+it, the endpoint still works and returns the animated GIF preview; it
+just returns `loop_mp4: null` instead of a video file.
 
 ## Usage
 
