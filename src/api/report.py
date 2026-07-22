@@ -1,0 +1,133 @@
+"""Builds a one-page PDF summary of a single gallery triplet's Farneback
+vs. FILM comparison -- real-world usage: a shareable, archivable record
+of one generated result (the kind of artifact an analyst would attach to
+an incident report), rather than something only viewable on a live web
+page. Deliberately takes plain values rather than gallery.py's pydantic
+models, so this module has no dependency on gallery.py (which imports
+this one).
+"""
+from __future__ import annotations
+
+import base64
+import io
+from datetime import datetime, timezone
+
+from reportlab.lib import colors
+from reportlab.lib.enums import TA_CENTER
+from reportlab.lib.pagesizes import A4
+from reportlab.lib.styles import ParagraphStyle
+from reportlab.lib.units import inch
+from reportlab.platypus import Image as RLImage
+from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer, Table, TableStyle
+
+_TITLE = ParagraphStyle("title", fontName="Helvetica-Bold", fontSize=16, alignment=TA_CENTER, spaceAfter=4)
+_SUBTITLE = ParagraphStyle(
+    "subtitle", fontName="Helvetica", fontSize=10, alignment=TA_CENTER,
+    textColor=colors.grey, spaceAfter=18,
+)
+_HEADING = ParagraphStyle("heading", fontName="Helvetica-Bold", fontSize=12, spaceBefore=16, spaceAfter=8)
+_CAPTION = ParagraphStyle("caption", fontName="Helvetica", fontSize=8.5, alignment=TA_CENTER, textColor=colors.grey)
+_FOOTER = ParagraphStyle("footer", fontName="Helvetica", fontSize=8, textColor=colors.grey, spaceBefore=24)
+
+
+def _image_cell(data_uri: str, size: float = 1.7 * inch) -> RLImage:
+    png_bytes = base64.b64decode(data_uri.split(",", 1)[1])
+    return RLImage(io.BytesIO(png_bytes), width=size, height=size)
+
+
+def _metrics_table(
+    farneback_psnr: float, farneback_ssim: float, farneback_lpips: float,
+    film_psnr: float, film_ssim: float, film_lpips: float,
+) -> Table:
+    data = [
+        ["Method", "PSNR (dB)", "SSIM", "LPIPS"],
+        ["Farneback (classical)", f"{farneback_psnr:.2f}", f"{farneback_ssim:.4f}", f"{farneback_lpips:.4f}"],
+        ["FILM (fine-tuned)", f"{film_psnr:.2f}", f"{film_ssim:.4f}", f"{film_lpips:.4f}"],
+    ]
+    table = Table(data, colWidths=[1.9 * inch, 1.3 * inch, 1.1 * inch, 1.1 * inch])
+    table.setStyle(TableStyle([
+        ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
+        ("FONTNAME", (0, 1), (-1, -1), "Helvetica"),
+        ("FONTSIZE", (0, 0), (-1, -1), 10),
+        ("ALIGN", (1, 0), (-1, -1), "CENTER"),
+        ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
+        ("LINEABOVE", (0, 0), (-1, 0), 1, colors.black),
+        ("LINEBELOW", (0, 0), (-1, 0), 1, colors.black),
+        ("LINEBELOW", (0, -1), (-1, -1), 0.75, colors.black),
+        ("TOPPADDING", (0, 0), (-1, -1), 7),
+        ("BOTTOMPADDING", (0, 0), (-1, -1), 7),
+    ]))
+    return table
+
+
+def build_report_pdf(
+    *,
+    label: str,
+    subset: str,
+    model: str,
+    frame_prev: str,
+    frame_next: str,
+    ground_truth: str,
+    farneback_mid: str,
+    film_mid: str,
+    farneback_psnr: float,
+    farneback_ssim: float,
+    farneback_lpips: float,
+    film_psnr: float,
+    film_ssim: float,
+    film_lpips: float,
+) -> bytes:
+    """All image arguments are `data:image/png;base64,...` URIs, matching
+    what GalleryItem/GenerateResult already carry -- the caller doesn't
+    need to touch a numpy array or the filesystem."""
+    buf = io.BytesIO()
+    doc = SimpleDocTemplate(
+        buf, pagesize=A4,
+        leftMargin=0.9 * inch, rightMargin=0.9 * inch,
+        topMargin=0.8 * inch, bottomMargin=0.8 * inch,
+        title=f"Antara Report - {label}",
+    )
+
+    story = [
+        Paragraph("Antara &mdash; Frame Interpolation Report", _TITLE),
+        Paragraph(
+            f"{label} ({subset}) &middot; generated "
+            f"{datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M UTC')} &middot; model: {model}",
+            _SUBTITLE,
+        ),
+        Paragraph("Input frames and ground truth", _HEADING),
+        Table(
+            [
+                [_image_cell(frame_prev), _image_cell(ground_truth), _image_cell(frame_next)],
+                [
+                    Paragraph("t&minus;1 (real)", _CAPTION),
+                    Paragraph("t (real, ground truth)", _CAPTION),
+                    Paragraph("t+1 (real)", _CAPTION),
+                ],
+            ],
+            colWidths=[1.9 * inch] * 3,
+        ),
+        Paragraph("Synthesized predictions", _HEADING),
+        Table(
+            [
+                [_image_cell(farneback_mid), _image_cell(film_mid)],
+                [Paragraph("Farneback (classical)", _CAPTION), Paragraph("FILM (fine-tuned)", _CAPTION)],
+            ],
+            colWidths=[1.9 * inch] * 2,
+        ),
+        Paragraph("Accuracy vs. real ground truth", _HEADING),
+        _metrics_table(
+            farneback_psnr, farneback_ssim, farneback_lpips,
+            film_psnr, film_ssim, film_lpips,
+        ),
+        Spacer(1, 0.1 * inch),
+        Paragraph(
+            "Generated by Antara (github.com/HimanshuSolo/Antara), a capstone project on "
+            "ISRO&rsquo;s &ldquo;Fill in the Frames Seamlessly&rdquo; problem statement. "
+            "Pipeline: src/baseline/farneback_interpolate.py and src/deep/film_interpolate.py.",
+            _FOOTER,
+        ),
+    ]
+
+    doc.build(story)
+    return buf.getvalue()
