@@ -4,15 +4,18 @@ Minimal Next.js frontend for the Antara capstone project: an overview
 page, a results page (real PSNR/SSIM/LPIPS numbers pulled from
 `README.md`/`docs/PLAN.md` at the repo root), an interactive
 before/after slider demo comparing Farneback vs. fine-tuned FILM on a
-real cyclone frame, and a live page that runs that same comparison
-against whatever GOES-19 scans NOAA most recently published.
+real cyclone frame, and a live page with two runtime pieces: a monitor
+that runs that same comparison against whatever GOES-19 scans NOAA most
+recently published, and a gallery of curated cyclone/calm pairs that
+generates their middle frame on demand when you click "Generate".
 
 Deliberately minimal design: monochrome (white/black, with a dark-mode
 variant), no component library. Every page except `/live` is fully
 static — every number and image generated ahead of time by the Python
 pipeline in `src/`. `/live` is the one page that fetches at runtime,
 calling the FastAPI service in `src/api/live.py` (needs to be running
-locally — see the repo root README's "Web frontend" section).
+locally — see the repo root README's "Web frontend" section), which also
+mounts the gallery's endpoints from `src/api/gallery.py`.
 
 ## Develop
 
@@ -30,13 +33,14 @@ app/
   page.tsx            — overview / landing page
   results/page.tsx     — results tables + calm-vs-cyclone bar chart
   demo/page.tsx        — before/after slider demo
-  live/page.tsx        — live pipeline page (calls src/api/live.py at runtime)
+  live/page.tsx        — live pipeline page (calls src/api/live.py + src/api/gallery.py at runtime)
   layout.tsx, globals.css — shared shell + design system
 components/            — SiteHeader, SiteFooter, ResultsTable, PsnrBarChart,
-                          BeforeAfterSlider, LivePipeline
+                          BeforeAfterSlider, LivePipeline, Gallery
 lib/results.ts          — single source of truth for the numbers shown on /results and /demo;
                           mirrors the repo root README.md's Status section
 lib/liveApi.ts          — client for the live pipeline API (src/api/live.py)
+lib/galleryApi.ts       — client for the gallery API (src/api/gallery.py)
 public/demo/            — real Farneback/FILM/ground-truth PNGs for one cyclone triplet,
                           generated via src/baseline/farneback_interpolate.py and
                           src/deep/film_interpolate.py
