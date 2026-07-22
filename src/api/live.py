@@ -19,6 +19,7 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
+from src.api.gallery import router as gallery_router
 from src.baseline.farneback_interpolate import interpolate_middle_frame as farneback_interpolate
 from src.data import extract_triplets, fetch_goes
 from src.deep.film_interpolate import interpolate_middle_frame as film_interpolate
@@ -44,9 +45,10 @@ app = FastAPI(title="Antara live pipeline")
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
-    allow_methods=["GET"],
+    allow_methods=["GET", "POST"],
     allow_headers=["*"],
 )
+app.include_router(gallery_router)
 
 _cache: dict[str, "LiveResult"] = {}
 
