@@ -33,12 +33,15 @@ export type GenerateResult = {
 };
 
 // A real-world usage endpoint: assembles t-1, N FILM-interpolated
-// intermediate frames, and t+1 into a single looping GIF -- a higher
+// intermediate frames, and t+1 into a single looping sequence -- a higher
 // effective frame-rate satellite motion loop, the format forecasters
 // actually watch to track storm motion, rather than one static frame.
+// loop_gif is for the inline animated preview; loop_mp4 (H.264, smaller,
+// shareable) is for download, and is null if the server has no ffmpeg.
 export type LoopResult = {
   id: string;
   loop_gif: string;
+  loop_mp4: string | null;
   num_frames: number;
   processing_seconds: number;
   model: string;
