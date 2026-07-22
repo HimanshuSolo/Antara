@@ -97,6 +97,18 @@ on fast, non-linear cloud dynamics.
       streaming data (none was available), so it demonstrates the
       mechanism works end-to-end on real GOES-16 data, not seasonal
       adaptation specifically.
+- [x] Live pipeline (stretch): `src/api/live.py` is a small FastAPI
+      service that fetches the two most recently published GOES-19 band 13
+      scans (GOES-16's successor -- see `src/data/fetch_goes.py`'s
+      `latest_scan_pair`) and runs the real Farneback and fine-tuned FILM
+      methods on them. There is no real frame between those two scans
+      yet, so this is a genuinely live run of the pipeline, not a canned
+      one -- everywhere else on the site is static, numbers/images baked
+      in ahead of time. The `web/live` page (`LivePipeline` component)
+      calls it and renders a before/after slider on the synthesized
+      midpoint. Run for real against `noaa-goes19`: a scan pair 10
+      minutes apart end to end in ~140s on CPU (download + Farneback +
+      FILM inference).
 - [ ] INSAT-3D/3DR validation via MOSDAC (stretch).
 
 See the full plan and rationale for each step at
@@ -216,18 +228,25 @@ they survive when the session ends.
 
 ## Web frontend
 
-`web/` is a minimal, static Next.js site: an overview page, a results
-page (the same PSNR/SSIM/LPIPS numbers as the Status section above),
-and an interactive before/after slider comparing Farneback vs.
-fine-tuned FILM on a real cyclone frame. Monochrome by design (white/
-black, with a dark-mode variant) -- no component library, no
-client-side data fetching, every number and image baked in ahead of
-time by the Python pipeline above.
+`web/` is a minimal Next.js site: an overview page, a results page (the
+same PSNR/SSIM/LPIPS numbers as the Status section above), and an
+interactive before/after slider comparing Farneback vs. fine-tuned FILM
+on a real cyclone frame. Monochrome by design (white/black, with a
+dark-mode variant) -- no component library. Every page except `/live` is
+fully static, numbers and images baked in ahead of time by the Python
+pipeline above; `/live` is the one exception, calling the small FastAPI
+service in `src/api/live.py` at runtime to run that same pipeline
+against whatever GOES-19 scans were published most recently (see "Live
+pipeline" in the Status section above).
 
 ```bash
 cd web
 npm install
 npm run dev   # http://localhost:3000
+
+# in a second terminal, to make the /live page work:
+cd ..
+.venv/bin/uvicorn src.api.live:app --reload --port 8000
 ```
 
 See `web/README.md` for its structure.
@@ -259,8 +278,9 @@ src/
               ablate_patch_size.py     — Farneback/FILM at several patch sizes
               generate_report.py       — assemble the full report: narrative + results/ablations/figures
               generate_demo.py         — self-contained before/after slider demo per triplet
+  api/        live.py                  — FastAPI service backing the web/live page (stretch)
 tests/        unit tests for metrics, baseline, FILM interpolation, and the data pipeline
-web/          static Next.js frontend — see "Web frontend" above and web/README.md
+web/          mostly-static Next.js frontend, one live page — see "Web frontend" above and web/README.md
 ```
 
 ## Data source
