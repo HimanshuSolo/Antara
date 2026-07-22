@@ -5,6 +5,7 @@ import {
   stratifiedResults,
   zeroShotResults,
   finetuneProofOfConcept,
+  finetuneFullScale,
   patchSizeAblation,
 } from "@/lib/results";
 
@@ -83,8 +84,27 @@ export default function ResultsPage() {
           }))}
         />
         <p className="caveat">
-          Small-scale (31 training triplets, 5 epochs on CPU) — a real result needs more data and
-          epochs on a Colab/Kaggle GPU. See <code>docs/PLAN.md</code> for what&apos;s left.
+          Small-scale (31 training triplets, 5 epochs on CPU) — see the full-scale GPU run below.
+        </p>
+      </section>
+
+      <section className="section--tight">
+        <h2>Full-scale fine-tuning (Colab GPU)</h2>
+        <p className="prose">
+          30 epochs on 207 triplets pooled from 3 GOES-16 days, evaluated on a 4th day never seen
+          during fine-tuning — the core contribution. Fine-tuning improves PSNR/SSIM over
+          zero-shot on this fully disjoint test day; LPIPS ticks up slightly, a real (small)
+          perceptual-vs-pixel trade-off rather than a straight win on every metric.
+        </p>
+        <ResultsTable
+          columns={["Method", "PSNR (dB)", "SSIM", "LPIPS"]}
+          rows={finetuneFullScale.map((r) => ({
+            key: r.method,
+            cells: [r.method, r.psnr.toFixed(2), r.ssim.toFixed(4), r.lpips.toFixed(4)],
+          }))}
+        />
+        <p className="caveat">
+          Run for real in <code>notebooks/finetune_on_colab.ipynb</code> on a Colab T4 GPU.
         </p>
       </section>
 
