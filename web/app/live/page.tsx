@@ -9,36 +9,36 @@ export const metadata: Metadata = {
 export default function LivePage() {
   return (
     <div className="container section">
-      <div className="section-label">Live monitoring</div>
-      <h1>Watching GOES-19 for the next scan, live.</h1>
+      <div className="section-label">Live pipeline</div>
+      <h1>Live inference on real-time satellite data</h1>
       <p className="lede">
-        Every other page on this site is static — numbers and images baked in ahead of
-        time. This one calls a small local API (<code>src/api/live.py</code>) that polls
-        for the two most recently published GOES-19 band 13 scans from NOAA&apos;s public
-        archive, then runs the real Farneback baseline and the fine-tuned FILM model on
-        them — automatically, as soon as a new pair lands.
+        Every other page on this site is static, with all figures and images computed in
+        advance. This page is the exception: it calls a local API (<code>src/api/live.py</code>)
+        that polls NOAA&apos;s public archive for the two most recently published GOES-19 band
+        13 scans, and automatically runs the Farneback baseline and the fine-tuned FILM model on
+        them as soon as a new pair becomes available.
       </p>
 
       <LivePipeline />
 
       <p className="caveat">
-        Requires the API server running locally: <code>.venv/bin/uvicorn src.api.live:app
-        --reload --port 8000</code> from the repo root (needs <code>models/</code> to
-        contain a FILM checkpoint — see the root README&apos;s Setup section). See{" "}
-        <code>web/README.md</code> for details.
+        Requires the API server to be running locally: run{" "}
+        <code>.venv/bin/uvicorn src.api.live:app --reload --port 8000</code> from the
+        repository root (<code>models/</code> must contain a FILM checkpoint &mdash; see the
+        root README&apos;s Setup section). See <code>web/README.md</code> for further details.
       </p>
 
       <div className="section--tight" style={{ marginTop: "3.5rem" }}>
         <div className="section-label">Gallery</div>
-        <h2>Real cyclone and calm-weather pairs, generated on demand.</h2>
+        <h2>Curated examples: on-demand frame generation</h2>
         <p className="prose">
-          These (t&minus;1, t+1) pairs are curated from real GOES-16 events — Hurricane
-          Milton&apos;s eyewall in 2024, and calm off-season weather for comparison — via{" "}
-          <code>src/api/gallery.py</code>. Nothing runs until you click Generate: that
-          request triggers the real Farneback + FILM pipeline for that pair. Unlike the
-          pipeline above, these triplets have a real ground-truth middle frame on disk, so
-          each result comes back with genuine PSNR/SSIM/LPIPS accuracy numbers, not just a
-          plausible-looking guess.
+          These (t&minus;1, t+1) pairs are curated from real GOES-16 events: Hurricane
+          Milton&apos;s eyewall in 2024, and calm, off-season weather for comparison, served by{" "}
+          <code>src/api/gallery.py</code>. No computation occurs until the Generate button is
+          clicked, which triggers the real Farneback and FILM pipeline for that pair. Unlike the
+          live pipeline above, these triplets have a real ground-truth middle frame available on
+          disk, so each result includes genuine PSNR, SSIM, and LPIPS accuracy figures rather
+          than a qualitative estimate.
         </p>
         <Gallery />
       </div>
