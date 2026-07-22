@@ -76,7 +76,7 @@ function GalleryCard({ item }: { item: GalleryItem }) {
 
           {status === "loading" && (
             <p className="caveat" style={{ marginTop: "1rem" }}>
-              Running Farneback + FILM on this pair for real — a few seconds on CPU.
+              Running Farneback and FILM on this pair &mdash; typically a few seconds on CPU.
             </p>
           )}
 
@@ -148,9 +148,9 @@ function GalleryCard({ item }: { item: GalleryItem }) {
           </div>
 
           <p className="prose" style={{ marginTop: "1.25rem" }}>
-            This triplet has a real ground-truth middle frame — unlike the pipeline above,
-            where the true midpoint doesn&apos;t exist yet — so these are genuine accuracy
-            numbers, not just a plausible-looking guess.
+            This triplet has a real ground-truth middle frame, unlike the live pipeline above
+            where the true midpoint does not yet exist. The figures below are therefore
+            genuine accuracy measurements rather than a qualitative estimate.
           </p>
 
           <div className="section--tight">
@@ -185,10 +185,10 @@ export default function Gallery() {
       <div className="caveat" style={{ marginTop: "1.5rem" }}>
         {error}
         <br />
-        The gallery API isn&apos;t running or isn&apos;t reachable at{" "}
+        The gallery API is not running or is not reachable at{" "}
         <code>{LIVE_API_URL}</code>. Start it with{" "}
-        <code>.venv/bin/uvicorn src.api.live:app --reload --port 8000</code> from the repo
-        root.
+        <code>.venv/bin/uvicorn src.api.live:app --reload --port 8000</code> from the
+        repository root.
       </div>
     );
   }
