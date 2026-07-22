@@ -147,9 +147,57 @@ export default function LivePipeline() {
           </div>
 
           <p className="prose" style={{ marginTop: "1.5rem" }}>
-            There is no real frame between the two above yet — that gap is exactly what
-            gets synthesized below. Drag to compare the classical Farneback prediction
-            against the fine-tuned FILM prediction for the midpoint.
+            There is no real frame between the two below yet — that gap is exactly what
+            gets synthesized in the middle panel.
+          </p>
+
+          <div className="live-sequence" key={result.next_time}>
+            <div className="live-frame live-frame--real live-frame--t1">
+              <div className="live-frame__label">
+                <span>T&minus;1 (real)</span>
+                <span>{formatClock(new Date(result.prev_time))}</span>
+              </div>
+              <div className="live-frame__imgwrap">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={result.frame_prev} alt="Most recent real scan before the gap" />
+              </div>
+            </div>
+
+            <span className="live-sequence__arrow" aria-hidden="true">
+              &rarr;
+            </span>
+
+            <div className="live-frame">
+              <div className="live-frame__label">
+                <span>Synthesized (FILM)</span>
+                <span className="live-frame__generating-label">GENERATING</span>
+              </div>
+              <div className="live-frame__imgwrap live-frame__result">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={result.film_mid} alt="ML-synthesized middle frame" />
+                <div className="live-frame__scan" aria-hidden="true" />
+              </div>
+            </div>
+
+            <span className="live-sequence__arrow" aria-hidden="true">
+              &larr;
+            </span>
+
+            <div className="live-frame live-frame--real live-frame--t2">
+              <div className="live-frame__label">
+                <span>T+1 (real)</span>
+                <span>{formatClock(new Date(result.next_time))}</span>
+              </div>
+              <div className="live-frame__imgwrap">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={result.frame_next} alt="Most recent real scan after the gap" />
+              </div>
+            </div>
+          </div>
+
+          <p className="prose" style={{ marginTop: "1.5rem" }}>
+            Drag to compare the classical Farneback prediction against the fine-tuned FILM
+            prediction for that same midpoint.
           </p>
 
           <div className="section--tight">
@@ -160,27 +208,6 @@ export default function LivePipeline() {
               rightLabel="FILM"
               alt="Synthesized frame between the two most recent real scans"
             />
-          </div>
-
-          <div className="card-grid">
-            <div className="card">
-              <h3>t&minus;1 (real)</h3>
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={result.frame_prev}
-                alt="Most recent real scan before the gap"
-                style={{ width: "100%", border: "1px solid var(--border)" }}
-              />
-            </div>
-            <div className="card">
-              <h3>t+1 (real)</h3>
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={result.frame_next}
-                alt="Most recent real scan after the gap"
-                style={{ width: "100%", border: "1px solid var(--border)" }}
-              />
-            </div>
           </div>
         </div>
       )}
