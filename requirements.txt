@@ -22,3 +22,8 @@ torchvision
 
 # perceptual (LPIPS) metric, to complement pixelwise PSNR/SSIM
 lpips
+
+# live pipeline API served to the web/ frontend (src/api/live.py)
+fastapi
+uvicorn[standard]
+httpx  # fastapi.testclient.TestClient, used in tests/api/
