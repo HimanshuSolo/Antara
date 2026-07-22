@@ -40,6 +40,9 @@ export default function Home() {
           <Link href="/demo" className="btn btn--secondary">
             Try the demo
           </Link>
+          <Link href="/live" className="btn btn--secondary">
+            Run it live
+          </Link>
         </div>
 
         <div className="stat-grid">
