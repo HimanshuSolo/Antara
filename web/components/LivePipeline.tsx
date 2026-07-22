@@ -96,9 +96,9 @@ export default function LivePipeline() {
 
       {status === "loading" && (
         <p className="prose" style={{ marginTop: "1.25rem" }}>
-          Downloading the latest published GOES-19 band 13 scans and running Farneback +
-          FILM on them — this fetches real data and runs a real model, so it can take
-          anywhere from a few seconds to about a minute.
+          Downloading the most recently published GOES-19 band 13 scans and running Farneback
+          and FILM inference on them. This involves real data retrieval and real model
+          inference, and may take anywhere from a few seconds to about a minute.
         </p>
       )}
 
@@ -106,17 +106,17 @@ export default function LivePipeline() {
         <div className="caveat" style={{ marginTop: "1.25rem" }}>
           {error}
           <br />
-          The live API isn&apos;t running or isn&apos;t reachable at{" "}
+          The live API is not running or is not reachable at{" "}
           <code>{LIVE_API_URL}</code>. Start it with{" "}
           <code>.venv/bin/uvicorn src.api.live:app --reload --port 8000</code>{" "}
-          from the repo root.
+          from the repository root.
         </div>
       )}
 
       {status === "done" && error && (
         <div className="caveat" style={{ marginTop: "1.25rem" }}>
-          Last check failed ({error}) — still showing the most recent successful
-          result below. Retrying automatically.
+          Last check failed ({error}). The most recent successful result is still shown
+          below; retrying automatically.
         </div>
       )}
 
@@ -124,7 +124,8 @@ export default function LivePipeline() {
         <div style={{ marginTop: "2rem" }}>
           {justUpdated && (
             <p className="caveat" style={{ marginTop: 0, marginBottom: "1.5rem" }}>
-              New scan pair just landed — frame regenerated at {formatClock(new Date())}.
+              A new scan pair has been detected; the frame was regenerated at{" "}
+              {formatClock(new Date())}.
             </p>
           )}
           <div className="stat-grid">
@@ -147,8 +148,8 @@ export default function LivePipeline() {
           </div>
 
           <p className="prose" style={{ marginTop: "1.5rem" }}>
-            There is no real frame between the two below yet — that gap is exactly what
-            gets synthesized in the middle panel.
+            No real frame exists between the two scans shown below; this gap is precisely
+            what the model synthesizes in the middle panel.
           </p>
 
           <div className="live-sequence" key={result.next_time}>
@@ -196,8 +197,8 @@ export default function LivePipeline() {
           </div>
 
           <p className="prose" style={{ marginTop: "1.5rem" }}>
-            Drag to compare the classical Farneback prediction against the fine-tuned FILM
-            prediction for that same midpoint.
+            Drag the slider below to compare the classical Farneback prediction against the
+            fine-tuned FILM prediction for this midpoint.
           </p>
 
           <div className="section--tight">
