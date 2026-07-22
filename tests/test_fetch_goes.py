@@ -89,6 +89,49 @@ def test_download_range_downloads_every_listed_scan(monkeypatch, tmp_path):
     assert len(client.downloaded) == 2
 
 
+def test_latest_scan_pair_returns_last_two_sorted_keys():
+    client = FakeS3Client([
+        "ABI-L1b-RadF/2024/100/12/OR_ABI-L1b-RadF-M6C13_G16_s20241001200206_e1_c1.nc",
+        "ABI-L1b-RadF/2024/100/12/OR_ABI-L1b-RadF-M6C13_G16_s20241001210206_e1_c1.nc",
+        "ABI-L1b-RadF/2024/100/12/OR_ABI-L1b-RadF-M6C13_G16_s20241001220206_e1_c1.nc",
+    ])
+
+    prev_key, next_key = fetch_goes.latest_scan_pair(
+        band=13, now=datetime(2024, 4, 9, 12, 45), client=client
+    )
+
+    assert prev_key.endswith("s20241001210206_e1_c1.nc")
+    assert next_key.endswith("s20241001220206_e1_c1.nc")
+
+
+def test_latest_scan_pair_falls_back_to_previous_hour_near_top_of_hour():
+    # only one scan published so far in the current hour -- must reach
+    # back into the previous hour's listing to find a full pair.
+    client = FakeS3Client([
+        "ABI-L1b-RadF/2024/100/11/OR_ABI-L1b-RadF-M6C13_G16_s20241001150206_e1_c1.nc",
+        "ABI-L1b-RadF/2024/100/12/OR_ABI-L1b-RadF-M6C13_G16_s20241001200206_e1_c1.nc",
+    ])
+
+    prev_key, next_key = fetch_goes.latest_scan_pair(
+        band=13, now=datetime(2024, 4, 9, 12, 1), client=client
+    )
+
+    assert prev_key.endswith("s20241001150206_e1_c1.nc")
+    assert next_key.endswith("s20241001200206_e1_c1.nc")
+
+
+def test_latest_scan_pair_raises_when_fewer_than_two_scans_found():
+    client = FakeS3Client([
+        "ABI-L1b-RadF/2024/100/12/OR_ABI-L1b-RadF-M6C13_G16_s20241001200206_e1_c1.nc",
+    ])
+
+    try:
+        fetch_goes.latest_scan_pair(band=13, now=datetime(2024, 4, 9, 12, 1), client=client)
+        assert False, "expected RuntimeError"
+    except RuntimeError:
+        pass
+
+
 def test_download_range_downloads_concurrently_and_keeps_key_order(monkeypatch, tmp_path):
     # 12 scans across 2 hours -- enough that a small thread pool must
     # actually run several downloads at once, not just enqueue them.
