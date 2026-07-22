@@ -121,6 +121,16 @@ on fast, non-linear cloud dynamics.
       midpoint. Run for real against `noaa-goes19`: a scan pair 10
       minutes apart end to end in ~140s on CPU (download + Farneback +
       FILM inference).
+- [x] Gallery (stretch): `src/api/gallery.py` mounts onto the same app
+      and serves a handful of curated real GOES-16 (t-1, t+1) pairs --
+      Hurricane Milton's 2024 eyewall plus calm off-season weather --
+      instantly, with no model involved. Synthesizing the middle frame is
+      a separate, on-demand endpoint the `web/live` page's `Gallery`
+      component calls when the user clicks "Generate", running the real
+      Farneback + FILM pipeline live. Unlike the live pipeline above,
+      these triplets have a real ground-truth middle frame on disk, so
+      the response includes genuine PSNR/SSIM/LPIPS for both methods, not
+      just images.
 - [ ] INSAT-3D/3DR validation via MOSDAC (stretch).
 
 See the full plan and rationale for each step at
@@ -246,10 +256,14 @@ interactive before/after slider comparing Farneback vs. fine-tuned FILM
 on a real cyclone frame. Monochrome by design (white/black, with a
 dark-mode variant) -- no component library. Every page except `/live` is
 fully static, numbers and images baked in ahead of time by the Python
-pipeline above; `/live` is the one exception, calling the small FastAPI
-service in `src/api/live.py` at runtime to run that same pipeline
-against whatever GOES-19 scans were published most recently (see "Live
-pipeline" in the Status section above).
+pipeline above; `/live` is the one exception, with two runtime pieces
+served by `src/api/live.py`: the live monitor, which runs the real
+pipeline against whatever GOES-19 scans were published most recently
+(see "Live pipeline" in the Status section above), and a gallery of
+curated cyclone/calm pairs (`src/api/gallery.py`) that generates its
+middle frame on demand when you click "Generate", animated as t-1 and
+t+1 materializing in with the FILM-synthesized frame resolving between
+them (see "Gallery" in the Status section above).
 
 ```bash
 cd web
@@ -291,6 +305,7 @@ src/
               generate_report.py       — assemble the full report: narrative + results/ablations/figures
               generate_demo.py         — self-contained before/after slider demo per triplet
   api/        live.py                  — FastAPI service backing the web/live page (stretch)
+              gallery.py               — on-demand generation over curated cyclone/calm pairs, mounted on live.py's app (stretch)
 tests/        unit tests for metrics, baseline, FILM interpolation, and the data pipeline
 web/          mostly-static Next.js frontend, one live page — see "Web frontend" above and web/README.md
 ```
