@@ -238,3 +238,60 @@ def test_generate_loop_422s_for_invalid_num_frames():
     resp = _client().post("/api/gallery/anything/loop?num_frames=15")
 
     assert resp.status_code == 422
+
+
+def test_generate_report_returns_a_valid_pdf(tmp_path, monkeypatch):
+    item_dir = tmp_path / "item"
+    _write_triplet(item_dir)
+    monkeypatch.setattr(
+        gallery, "GALLERY_ITEMS", [{"id": "item", "label": "Item", "subset": "calm", "dir": item_dir}]
+    )
+    gallery._cache.clear()
+
+    model_path = tmp_path / "model.pt"
+    model_path.write_bytes(b"fake")
+    monkeypatch.setattr("src.api.live.resolve_model_path", lambda: model_path)
+    monkeypatch.setattr(gallery, "farneback_interpolate", lambda a, b: _fake_frame(90))
+    monkeypatch.setattr(gallery, "film_interpolate", lambda a, b, path: _fake_frame(99))
+
+    resp = _client().post("/api/gallery/item/report")
+
+    assert resp.status_code == 200
+    body = resp.json()
+    assert body["id"] == "item"
+    assert body["generated_at"]
+    assert body["report_pdf"].startswith("data:application/pdf;base64,")
+
+    pdf_bytes = base64.b64decode(body["report_pdf"].split(",", 1)[1])
+    assert pdf_bytes.startswith(b"%PDF")
+
+
+def test_generate_report_reuses_the_generate_cache(tmp_path, monkeypatch):
+    item_dir = tmp_path / "item"
+    _write_triplet(item_dir)
+    monkeypatch.setattr(
+        gallery, "GALLERY_ITEMS", [{"id": "item", "label": "Item", "subset": "calm", "dir": item_dir}]
+    )
+    gallery._cache.clear()
+
+    model_path = tmp_path / "model.pt"
+    model_path.write_bytes(b"fake")
+    monkeypatch.setattr("src.api.live.resolve_model_path", lambda: model_path)
+
+    calls = []
+    monkeypatch.setattr(gallery, "farneback_interpolate", lambda a, b: (calls.append(1), _fake_frame(90))[1])
+    monkeypatch.setattr(gallery, "film_interpolate", lambda a, b, path: _fake_frame(99))
+
+    client = _client()
+    client.post("/api/gallery/item/generate")
+    client.post("/api/gallery/item/report")
+
+    assert len(calls) == 1  # the report endpoint didn't rerun the pipeline
+
+
+def test_generate_report_404s_for_unknown_item(monkeypatch):
+    monkeypatch.setattr(gallery, "GALLERY_ITEMS", [])
+
+    resp = _client().post("/api/gallery/nonexistent/report")
+
+    assert resp.status_code == 404
