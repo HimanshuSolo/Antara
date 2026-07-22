@@ -29,33 +29,33 @@ from src.utils.image import load_triplet_frames
 GALLERY_ITEMS = [
     {
         "id": "milton-1",
-        "label": "Hurricane Milton, eyewall (1)",
+        "label": "Hurricane Milton, approaching peak intensity",
         "subset": "cyclone",
-        "dir": Path("data/processed/triplets_cyclone/triplet_0000"),
+        "dir": Path("data/processed/triplets_cyclone/triplet_0013"),
     },
     {
         "id": "milton-2",
-        "label": "Hurricane Milton, eyewall (2)",
+        "label": "Hurricane Milton, peak intensity",
         "subset": "cyclone",
-        "dir": Path("data/processed/triplets_cyclone/triplet_0009"),
+        "dir": Path("data/processed/triplets_cyclone/triplet_0020"),
     },
     {
         "id": "milton-3",
-        "label": "Hurricane Milton, eyewall (3)",
+        "label": "Hurricane Milton, eyewall rotating past peak",
         "subset": "cyclone",
-        "dir": Path("data/processed/triplets_cyclone/triplet_0020"),
+        "dir": Path("data/processed/triplets_cyclone/triplet_0025"),
     },
     {
         "id": "calm-1",
         "label": "Calm weather, off-season (1)",
         "subset": "calm",
-        "dir": Path("data/processed/triplets_calm/triplet_0005"),
+        "dir": Path("data/processed/triplets_calm/triplet_0044"),
     },
     {
         "id": "calm-2",
         "label": "Calm weather, off-season (2)",
         "subset": "calm",
-        "dir": Path("data/processed/triplets_calm/triplet_0030"),
+        "dir": Path("data/processed/triplets_calm/triplet_0051"),
     },
 ]
 
