@@ -148,6 +148,16 @@ on fast, non-linear cloud dynamics.
       shareable than the GIF, and the `Gallery` component exposes it as
       a "Download MP4" link. Degrades gracefully (`loop_mp4: null`) if
       `ffmpeg` isn't installed on the machine running the API.
+- [x] Per-triplet PDF report endpoint (stretch, real-world usage): `POST
+      /api/gallery/{id}/report` (`src/api/report.py`) renders the same
+      t-1/t/t+1 images, Farneback/FILM predictions, and PSNR/SSIM/LPIPS
+      figures from `generate()` into a single-page PDF -- the kind of
+      shareable, archivable artifact an analyst would attach to an
+      incident report, not just something viewed on a live web page.
+      Reuses `generate()`'s cache, so it doesn't rerun the model if the
+      single-frame result already exists. The `Gallery` component's
+      "Generate PDF report" button calls it and exposes the result as a
+      "Download PDF report" link.
 - [ ] INSAT-3D/3DR validation via MOSDAC (stretch).
 
 See the full plan and rationale for each step at
@@ -328,6 +338,7 @@ src/
               generate_demo.py         — self-contained before/after slider demo per triplet
   api/        live.py                  — FastAPI service backing the web/live page (stretch)
               gallery.py               — on-demand generation over curated cyclone/calm pairs, mounted on live.py's app (stretch)
+              report.py                — one-page PDF report builder for a single gallery triplet (stretch)
 tests/        unit tests for metrics, baseline, FILM interpolation, and the data pipeline
 web/          mostly-static Next.js frontend, one live page — see "Web frontend" above and web/README.md
 ```
