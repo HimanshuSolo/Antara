@@ -5,8 +5,10 @@ import BeforeAfterSlider from "@/components/BeforeAfterSlider";
 import {
   fetchGallery,
   generateGalleryItem,
+  generateGalleryLoop,
   type GalleryItem,
   type GenerateResult,
+  type LoopResult,
 } from "@/lib/galleryApi";
 import { LIVE_API_URL } from "@/lib/liveApi";
 
@@ -16,6 +18,10 @@ function GalleryCard({ item }: { item: GalleryItem }) {
   const [status, setStatus] = useState<CardStatus>("idle");
   const [result, setResult] = useState<GenerateResult | null>(null);
   const [error, setError] = useState<string | null>(null);
+
+  const [loopStatus, setLoopStatus] = useState<CardStatus>("idle");
+  const [loop, setLoop] = useState<LoopResult | null>(null);
+  const [loopError, setLoopError] = useState<string | null>(null);
 
   const onGenerate = async () => {
     setStatus("loading");
@@ -27,6 +33,19 @@ function GalleryCard({ item }: { item: GalleryItem }) {
     } catch (e) {
       setError(e instanceof Error ? e.message : "Generation failed.");
       setStatus("error");
+    }
+  };
+
+  const onGenerateLoop = async () => {
+    setLoopStatus("loading");
+    setLoopError(null);
+    try {
+      const data = await generateGalleryLoop(item.id);
+      setLoop(data);
+      setLoopStatus("done");
+    } catch (e) {
+      setLoopError(e instanceof Error ? e.message : "Loop generation failed.");
+      setLoopStatus("error");
     }
   };
 
@@ -161,6 +180,52 @@ function GalleryCard({ item }: { item: GalleryItem }) {
               rightLabel="FILM"
               alt={`Synthesized frame for ${item.label}`}
             />
+          </div>
+
+          <div className="section--tight">
+            <p className="prose">
+              A single synthesized frame is useful for measurement, but a forecaster tracking
+              a storm actually watches a satellite loop. Generating several evenly-spaced
+              FILM frames instead of one turns this real frame gap into a smoother,
+              higher-effective-frame-rate motion loop.
+            </p>
+
+            {loopStatus !== "done" && (
+              <button
+                className="btn btn--secondary"
+                onClick={onGenerateLoop}
+                disabled={loopStatus === "loading"}
+              >
+                {loopStatus === "loading" ? "Generating loop…" : "Generate satellite loop"}
+              </button>
+            )}
+
+            {loopStatus === "loading" && (
+              <p className="caveat" style={{ marginTop: "1rem" }}>
+                Running FILM at 5 evenly-spaced intermediate times between t&minus;1 and
+                t+1 &mdash; several forward passes, so this takes a bit longer than a single
+                frame.
+              </p>
+            )}
+
+            {loopStatus === "error" && (
+              <div className="caveat" style={{ marginTop: "1rem" }}>
+                {loopError}
+              </div>
+            )}
+
+            {loopStatus === "done" && loop && (
+              <div style={{ marginTop: "1rem" }}>
+                <div className="live-frame__imgwrap" style={{ maxWidth: 360 }}>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={loop.loop_gif} alt={`Satellite motion loop for ${item.label}`} />
+                </div>
+                <p className="caveat" style={{ marginTop: "0.75rem" }}>
+                  {loop.num_frames}&times; FILM-interpolated frames between the two real
+                  scans, generated in {loop.processing_seconds.toFixed(1)}s.
+                </p>
+              </div>
+            )}
           </div>
         </>
       )}
