@@ -14,6 +14,9 @@ from __future__ import annotations
 
 import base64
 import io
+import shutil
+import subprocess
+import tempfile
 import time
 from pathlib import Path
 
@@ -98,6 +101,7 @@ class GenerateResult(BaseModel):
 class LoopResult(BaseModel):
     id: str
     loop_gif: str
+    loop_mp4: str | None
     num_frames: int
     processing_seconds: float
     model: str
@@ -122,6 +126,41 @@ def encode_gif(frames: list[np.ndarray], duration_ms: int = 220) -> str:
         duration=duration_ms, loop=0,
     )
     return "data:image/gif;base64," + base64.b64encode(buf.getvalue()).decode("ascii")
+
+
+def encode_mp4(frames: list[np.ndarray], fps: int = 5) -> str | None:
+    """Assemble grayscale frames into an H.264 MP4 via ffmpeg -- unlike
+    the GIF above (meant for an inline animated preview), this is the
+    downloadable artifact: much smaller, and plays natively in any video
+    player or a browser <video> element rather than just an <img>. Uses
+    ffmpeg's libopenh264 encoder specifically, since it doesn't depend on
+    GPU/hardware encode support the way h264_nvenc/vaapi/v4l2m2m do.
+    Returns None (rather than raising) if ffmpeg isn't installed, so the
+    GIF preview still works on a machine without it.
+    """
+    if shutil.which("ffmpeg") is None:
+        return None
+
+    with tempfile.TemporaryDirectory() as tmpdir:
+        tmp = Path(tmpdir)
+        for i, frame in enumerate(frames):
+            cv2.imwrite(str(tmp / f"frame_{i:03d}.png"), frame)
+        out_path = tmp / "loop.mp4"
+        try:
+            subprocess.run(
+                [
+                    "ffmpeg", "-y", "-framerate", str(fps),
+                    "-i", str(tmp / "frame_%03d.png"),
+                    "-c:v", "libopenh264", "-pix_fmt", "yuv420p",
+                    str(out_path),
+                ],
+                check=True, capture_output=True, timeout=30,
+            )
+        except (subprocess.CalledProcessError, subprocess.TimeoutExpired):
+            return None
+        video_bytes = out_path.read_bytes()
+
+    return "data:video/mp4;base64," + base64.b64encode(video_bytes).decode("ascii")
 
 
 def _find_item(item_id: str) -> dict:
@@ -195,10 +234,11 @@ def generate(item_id: str) -> GenerateResult:
 @router.post("/api/gallery/{item_id}/loop", response_model=LoopResult)
 def generate_loop(item_id: str, num_frames: int = 5) -> LoopResult:
     """Real-world usage endpoint: assembles t-1, `num_frames` FILM-
-    interpolated intermediate frames, and t+1 into a single looping GIF --
-    a higher-effective-frame-rate satellite motion loop, the actual
-    format forecasters use to track storm motion, rather than a single
-    static comparison image."""
+    interpolated intermediate frames, and t+1 into a single looping
+    sequence -- a higher-effective-frame-rate satellite motion loop, the
+    actual format forecasters use to track storm motion, rather than a
+    single static comparison image. Returned as both an inline-previewable
+    GIF and a downloadable H.264 MP4 (smaller, shareable)."""
     from src.api.live import resolve_model_path
     from src.deep.film_interpolate import interpolate_multi
 
@@ -224,6 +264,7 @@ def generate_loop(item_id: str, num_frames: int = 5) -> LoopResult:
     result = LoopResult(
         id=item_id,
         loop_gif=encode_gif(sequence),
+        loop_mp4=encode_mp4(sequence),
         num_frames=num_frames,
         processing_seconds=round(time.monotonic() - start, 1),
         model=model_path.name,
