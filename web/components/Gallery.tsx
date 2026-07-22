@@ -6,9 +6,11 @@ import {
   fetchGallery,
   generateGalleryItem,
   generateGalleryLoop,
+  generateGalleryReport,
   type GalleryItem,
   type GenerateResult,
   type LoopResult,
+  type ReportResult,
 } from "@/lib/galleryApi";
 import { LIVE_API_URL } from "@/lib/liveApi";
 
@@ -22,6 +24,10 @@ function GalleryCard({ item }: { item: GalleryItem }) {
   const [loopStatus, setLoopStatus] = useState<CardStatus>("idle");
   const [loop, setLoop] = useState<LoopResult | null>(null);
   const [loopError, setLoopError] = useState<string | null>(null);
+
+  const [reportStatus, setReportStatus] = useState<CardStatus>("idle");
+  const [report, setReport] = useState<ReportResult | null>(null);
+  const [reportError, setReportError] = useState<string | null>(null);
 
   const onGenerate = async () => {
     setStatus("loading");
@@ -46,6 +52,19 @@ function GalleryCard({ item }: { item: GalleryItem }) {
     } catch (e) {
       setLoopError(e instanceof Error ? e.message : "Loop generation failed.");
       setLoopStatus("error");
+    }
+  };
+
+  const onGenerateReport = async () => {
+    setReportStatus("loading");
+    setReportError(null);
+    try {
+      const data = await generateGalleryReport(item.id);
+      setReport(data);
+      setReportStatus("done");
+    } catch (e) {
+      setReportError(e instanceof Error ? e.message : "Report generation failed.");
+      setReportStatus("error");
     }
   };
 
@@ -180,6 +199,46 @@ function GalleryCard({ item }: { item: GalleryItem }) {
               rightLabel="FILM"
               alt={`Synthesized frame for ${item.label}`}
             />
+          </div>
+
+          <div className="section--tight">
+            <p className="prose">
+              An analyst archiving this comparison &mdash; or attaching it to an incident
+              report &mdash; needs something more portable than a live web page. This renders
+              the images and accuracy figures above into a single-page PDF.
+            </p>
+
+            {reportStatus !== "done" && (
+              <button
+                className="btn btn--secondary"
+                onClick={onGenerateReport}
+                disabled={reportStatus === "loading"}
+              >
+                {reportStatus === "loading" ? "Generating report…" : "Generate PDF report"}
+              </button>
+            )}
+
+            {reportStatus === "error" && (
+              <div className="caveat" style={{ marginTop: "1rem" }}>
+                {reportError}
+              </div>
+            )}
+
+            {reportStatus === "done" && report && (
+              <div style={{ marginTop: "0.5rem" }}>
+                <a
+                  className="btn btn--secondary"
+                  style={{ display: "inline-block" }}
+                  href={report.report_pdf}
+                  download={`${item.id}-report.pdf`}
+                >
+                  Download PDF report
+                </a>
+                <p className="caveat" style={{ marginTop: "0.75rem" }}>
+                  Generated {report.generated_at}.
+                </p>
+              </div>
+            )}
           </div>
 
           <div className="section--tight">
