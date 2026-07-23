@@ -75,6 +75,30 @@ def list_storms(
     return names
 
 
+def interpolate_position(fixes: list[StormFix], at: datetime) -> tuple[float, float] | None:
+    """Linearly interpolate a storm's (lat, lon) at an arbitrary time from
+    its best-track fixes, which are typically 3-6 hours apart -- far
+    coarser than GOES' ~10-minute scan cadence. Returns None if `at` falls
+    outside the track's time range, since there's nothing to interpolate
+    between there.
+
+    Like `geo_projection.py`, this doesn't handle antimeridian-crossing
+    tracks -- not a real edge case for the NA/EP-basin storms this project
+    evaluates.
+    """
+    if len(fixes) < 2 or at < fixes[0].time or at > fixes[-1].time:
+        return None
+
+    for a, b in zip(fixes, fixes[1:]):
+        if a.time <= at <= b.time:
+            span = (b.time - a.time).total_seconds()
+            if span == 0:
+                return (a.lat, a.lon)
+            frac = (at - a.time).total_seconds() / span
+            return (a.lat + frac * (b.lat - a.lat), a.lon + frac * (b.lon - a.lon))
+    return None  # unreachable given the range check above
+
+
 def load_track(csv_path: Path, name: str, season: int) -> list[StormFix]:
     """All best-track fixes for a named storm in a given season, sorted by time."""
     fixes = []
