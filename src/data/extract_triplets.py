@@ -9,6 +9,7 @@ project self-supervised: no manual labeling, just real consecutive scans.
 from __future__ import annotations
 
 import argparse
+import json
 import re
 from datetime import datetime
 from pathlib import Path
@@ -112,6 +113,20 @@ def build_triplets(
         for offset, name in zip((0, 1, 2), ("t-1", "t", "t+1")):
             patch = scan_to_patch(nc_paths[i + offset], center, size)
             cv2.imwrite(str(triplet_dir / f"{name}.png"), patch)
+
+        # Records exactly what produced this triplet -- the source scan
+        # each frame came from, its exact timestamp, and the full-disk
+        # pixel this patch was cropped around. Without this, there'd be no
+        # way to later recover *where* (in real lat/lon terms) any given
+        # pixel in the patch actually is, which build_eye_labels.py needs
+        # to turn IBTrACS storm positions into ground-truth pixel labels.
+        meta = {
+            "source": [str(nc_paths[i + offset]) for offset in (0, 1, 2)],
+            "scan_times": [times[i + offset].isoformat() for offset in (0, 1, 2)],
+            "center": list(center),
+            "size": size,
+        }
+        (triplet_dir / "meta.json").write_text(json.dumps(meta))
         written.append(triplet_dir)
 
     if skipped:
