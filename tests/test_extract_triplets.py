@@ -1,3 +1,4 @@
+import json
 from pathlib import Path
 
 import numpy as np
@@ -126,6 +127,26 @@ def test_build_triplets_writes_three_frames_per_triplet(tmp_path):
     assert (triplet_dir / "t-1.png").exists()
     assert (triplet_dir / "t.png").exists()
     assert (triplet_dir / "t+1.png").exists()
+
+
+def test_build_triplets_writes_meta_with_sources_times_and_center(tmp_path):
+    raw_dir = tmp_path / "raw"
+    raw_dir.mkdir()
+    nc_paths = []
+    for minute in (0, 10, 20):
+        path = raw_dir / _scan_filename(minute)
+        _write_goes_scan(path, np.zeros((8, 8), dtype=np.float32))
+        nc_paths.append(path)
+
+    out_dir = tmp_path / "triplets"
+    written = build_triplets(nc_paths, center=(4, 4), size=8, out_dir=out_dir)
+
+    meta = json.loads((written[0] / "meta.json").read_text())
+    assert meta["source"] == [str(p) for p in nc_paths]
+    assert len(meta["scan_times"]) == 3
+    assert meta["scan_times"][0] < meta["scan_times"][1] < meta["scan_times"][2]
+    assert meta["center"] == [4, 4]
+    assert meta["size"] == 8
 
 
 def test_build_triplets_skips_triplets_spanning_an_abnormal_gap(tmp_path):
