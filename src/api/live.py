@@ -20,6 +20,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
 from src.api.gallery import router as gallery_router
+from src.api.track import router as track_router
 from src.baseline.farneback_interpolate import interpolate_middle_frame as farneback_interpolate
 from src.data import extract_triplets, fetch_goes
 from src.deep.film_interpolate import interpolate_middle_frame as film_interpolate
@@ -49,6 +50,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 app.include_router(gallery_router)
+app.include_router(track_router)
 
 _cache: dict[str, "LiveResult"] = {}
 
