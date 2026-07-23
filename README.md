@@ -158,6 +158,30 @@ on fast, non-linear cloud dynamics.
       single-frame result already exists. The `Gallery` component's
       "Generate PDF report" button calls it and exposes the result as a
       "Download PDF report" link.
+- [x] Cyclone eye tracking (stretch, new ML application): a second
+      application on the same triplets, answering a question PSNR/SSIM/LPIPS
+      can't -- does interpolation preserve *where* the storm actually was?
+      `src/data/build_eye_labels.py` derives per-frame ground-truth eye
+      pixel coordinates from IBTrACS best-track positions (linearly
+      interpolated to each scan's exact timestamp) and the crop metadata
+      `extract_triplets.py` now writes per triplet. Two detectors run
+      against that ground truth: a classical two-stage heuristic
+      (`src/baseline/eye_detect.py`, cold-cloud-shield centroid then
+      brightest-blob-within-radius, ~5.5px mean error on Milton) and a small
+      CNN trained from scratch (`src/deep/eye_detect.py` /
+      `eye_detect_train.py`, ~6.3px). Real result on the full 28-triplet
+      Milton set (`src/eval/evaluate_eye_detect.py`): running each detector
+      on the FILM-synthesized middle frame instead of the real one moves its
+      output by only 0.35px (classical) / 1.45px (CNN) on average, vs.
+      12.33px / 4.64px for Farneback -- FILM preserves the storm's actual
+      position far better than the classical baseline, not just pixel
+      similarity. Exposed at `POST /api/track/{id}/detect`
+      (`src/api/track.py`) and a new `/track` page (`EyeTracker` component),
+      separate from `/live`'s Gallery. The trained detector is a
+      single-storm proof of concept, not a generalization test -- pooling
+      several storms via `build_cyclone_dataset.py` before training is the
+      natural next step, the same path this project already took with
+      FILM's fine-tuning.
 - [ ] INSAT-3D/3DR validation via MOSDAC (stretch).
 
 See the full plan and rationale for each step at
