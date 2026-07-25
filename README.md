@@ -2,7 +2,7 @@
 
 [![tests](https://github.com/HimanshuSolo/Antara/actions/workflows/tests.yml/badge.svg)](https://github.com/HimanshuSolo/Antara/actions/workflows/tests.yml)
 
-*Antara* (अंतर) — It means "interval" or "the space between" —
+*Antara* — It means "interval" or "the space between" —
 fills the interval between satellite frames.
 
 Enhancing the temporal resolution of geostationary satellite imagery using
