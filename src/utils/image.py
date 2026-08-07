@@ -23,9 +23,13 @@ def load_triplet_frames(triplet_dir: Path) -> tuple[np.ndarray, np.ndarray, np.n
     None if any of the three PNGs is missing/unreadable. Callers decide
     whether a missing frame should be skipped or raised on.
     """
-    frame_prev = cv2.imread(str(triplet_dir / "t-1.png"), cv2.IMREAD_GRAYSCALE)
-    frame_mid = cv2.imread(str(triplet_dir / "t.png"), cv2.IMREAD_GRAYSCALE)
-    frame_next = cv2.imread(str(triplet_dir / "t+1.png"), cv2.IMREAD_GRAYSCALE)
+    p_prev, p_mid, p_next = triplet_dir / "t-1.png", triplet_dir / "t.png", triplet_dir / "t+1.png"
+    if not (p_prev.exists() and p_mid.exists() and p_next.exists()):
+        return None
+    frame_prev = cv2.imread(str(p_prev), cv2.IMREAD_GRAYSCALE)
+    frame_mid = cv2.imread(str(p_mid), cv2.IMREAD_GRAYSCALE)
+    frame_next = cv2.imread(str(p_next), cv2.IMREAD_GRAYSCALE)
     if frame_prev is None or frame_mid is None or frame_next is None:
         return None
     return frame_prev, frame_mid, frame_next
+
