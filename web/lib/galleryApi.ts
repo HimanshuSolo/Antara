@@ -58,7 +58,25 @@ export type ReportResult = {
   generated_at: string;
 };
 
-async function unwrap<T>(res: Response): Promise<T> {
+async function fetchWithRetry(url: string, init?: RequestInit): Promise<Response> {
+  let attempts = 3;
+  let lastErr: Error | null = null;
+  while (attempts > 0) {
+    try {
+      return await fetch(url, init);
+    } catch (err) {
+      lastErr = err instanceof Error ? err : new Error(String(err));
+      attempts--;
+      if (attempts > 0) {
+        await new Promise((r) => setTimeout(r, 3000));
+      }
+    }
+  }
+  throw lastErr ?? new Error("Network request failed");
+}
+
+async function unwrap<T>(resPromise: Promise<Response>): Promise<T> {
+  const res = await resPromise;
   if (!res.ok) {
     const body = await res.json().catch(() => null);
     throw new Error(body?.detail ?? `Request failed (${res.status})`);
@@ -67,7 +85,7 @@ async function unwrap<T>(res: Response): Promise<T> {
 }
 
 export async function fetchGallery(): Promise<GalleryItem[]> {
-  return unwrap(await fetch(`${LIVE_API_URL}/api/gallery`));
+  return unwrap(fetchWithRetry(`${LIVE_API_URL}/api/gallery`));
 }
 
 export async function generateGalleryItem(id: string): Promise<GenerateResult> {

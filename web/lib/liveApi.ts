@@ -20,10 +20,23 @@ export type LiveResult = {
 };
 
 export async function fetchLiveResult(): Promise<LiveResult> {
-  const res = await fetch(`${LIVE_API_URL}/api/live`);
-  if (!res.ok) {
-    const body = await res.json().catch(() => null);
-    throw new Error(body?.detail ?? `Request failed (${res.status})`);
+  let attempts = 3;
+  let lastError: Error | null = null;
+  while (attempts > 0) {
+    try {
+      const res = await fetch(`${LIVE_API_URL}/api/live`);
+      if (!res.ok) {
+        const body = await res.json().catch(() => null);
+        throw new Error(body?.detail ?? `Request failed (${res.status})`);
+      }
+      return await res.json();
+    } catch (err) {
+      lastError = err instanceof Error ? err : new Error(String(err));
+      attempts--;
+      if (attempts > 0) {
+        await new Promise((resolve) => setTimeout(resolve, 3000));
+      }
+    }
   }
-  return res.json();
+  throw lastError ?? new Error("Failed to fetch live result");
 }
