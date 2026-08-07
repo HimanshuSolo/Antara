@@ -52,6 +52,11 @@ app.add_middleware(
 app.include_router(gallery_router)
 app.include_router(track_router)
 
+
+@app.get("/")
+def read_root() -> dict[str, str]:
+    return {"status": "ok", "service": "Antara live pipeline API", "docs": "/docs"}
+
 _cache: dict[str, "LiveResult"] = {}
 
 
