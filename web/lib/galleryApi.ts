@@ -75,8 +75,8 @@ async function fetchWithRetry(url: string, init?: RequestInit): Promise<Response
   throw lastErr ?? new Error("Network request failed");
 }
 
-async function unwrap<T>(resPromise: Promise<Response>): Promise<T> {
-  const res = await resPromise;
+async function unwrap<T>(resOrPromise: Response | Promise<Response>): Promise<T> {
+  const res = await resOrPromise;
   if (!res.ok) {
     const body = await res.json().catch(() => null);
     throw new Error(body?.detail ?? `Request failed (${res.status})`);
@@ -89,17 +89,18 @@ export async function fetchGallery(): Promise<GalleryItem[]> {
 }
 
 export async function generateGalleryItem(id: string): Promise<GenerateResult> {
-  return unwrap(await fetch(`${LIVE_API_URL}/api/gallery/${id}/generate`, { method: "POST" }));
+  return unwrap(fetchWithRetry(`${LIVE_API_URL}/api/gallery/${id}/generate`, { method: "POST" }));
 }
 
 export async function generateGalleryLoop(id: string, numFrames = 5): Promise<LoopResult> {
   return unwrap(
-    await fetch(`${LIVE_API_URL}/api/gallery/${id}/loop?num_frames=${numFrames}`, {
+    fetchWithRetry(`${LIVE_API_URL}/api/gallery/${id}/loop?num_frames=${numFrames}`, {
       method: "POST",
     }),
   );
 }
 
 export async function generateGalleryReport(id: string): Promise<ReportResult> {
-  return unwrap(await fetch(`${LIVE_API_URL}/api/gallery/${id}/report`, { method: "POST" }));
+  return unwrap(fetchWithRetry(`${LIVE_API_URL}/api/gallery/${id}/report`, { method: "POST" }));
 }
+
