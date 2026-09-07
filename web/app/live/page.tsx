@@ -13,10 +13,9 @@ export default function LivePage() {
       <h1>Live inference on real-time satellite data</h1>
       <p className="lede">
         Every other page on this site is static, with all figures and images computed in
-        advance. This page is the exception: it calls a local API (<code>src/api/live.py</code>)
-        that polls NOAA&apos;s public archive for the two most recently published GOES-19 band
-        13 scans, and automatically runs the Farneback baseline and the fine-tuned FILM model on
-        them as soon as a new pair becomes available.
+        advance. This page is the exception: it calls a local API that polls NOAA&apos;s public 
+        archive for the two most recently published GOES-19 band 13 scans, and automatically runs 
+        the Farneback baseline and the fine-tuned FILM model on them as soon as a new pair becomes available.
       </p>
 
       <LivePipeline />
