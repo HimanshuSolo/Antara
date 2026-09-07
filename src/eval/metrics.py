@@ -9,7 +9,7 @@ from pathlib import Path
 import lpips
 import numpy as np
 import torch
-from skimage.metrics import peak_signal_noise_ratio, structural_similarity
+from skimage.metrics import peak_signal_noise_ratio, structural_similarity # PSNR, SSIM
 
 from src.utils.image import replicate_to_rgb01
 
@@ -34,7 +34,6 @@ def _get_lpips_model() -> lpips.LPIPS:
 
 
 def _to_lpips_tensor(gray: np.ndarray) -> torch.Tensor:
-    # LPIPS' AlexNet backbone expects 3-channel input in [-1, 1].
     rgb = replicate_to_rgb01(gray)
     tensor = torch.from_numpy(rgb).permute(2, 0, 1).unsqueeze(0)
     return tensor * 2 - 1

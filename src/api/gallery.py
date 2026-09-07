@@ -200,9 +200,7 @@ def list_gallery() -> list[GalleryItem]:
 
 @router.post("/api/gallery/{item_id}/generate", response_model=GenerateResult)
 def generate(item_id: str) -> GenerateResult:
-    # deferred import -- avoids a circular import, since live.py mounts
-    # this module's router and this is the only thing gallery.py needs
-    # from it.
+    
     from src.api.live import resolve_model_path
 
     item = _find_item(item_id)

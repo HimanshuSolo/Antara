@@ -29,12 +29,6 @@ BAND = 13
 PATCH_SIZE = 256
 CACHE_DIR = Path("data/raw/live")
 
-# preference order: best fine-tuned checkpoint first, falling back to the
-# zero-shot pretrained one if fine-tuning hasn't been run locally.
-# film_net_finetuned_colab.pt is the full-scale run (30 epochs / 207
-# triplets on a Colab T4 GPU, 33.25 dB on a fully disjoint test day --
-# see notebooks/finetune_on_colab.ipynb and the README's Status section),
-# ranked above the earlier small-scale/CPU checkpoints.
 MODEL_CANDIDATES = [
     Path("models/film_net_finetuned_colab.pt"),
     Path("models/film_net_finetuned_updated.pt"),
