@@ -61,12 +61,6 @@ export default function DemoPage() {
           />
         </div>
       </div>
-
-      <p className="caveat">
-        Generated using <code>src/baseline/farneback_interpolate.py</code> and{" "}
-        <code>src/deep/film_interpolate.py</code> on a real cyclone triplet from{" "}
-        <code>data/processed/triplets_cyclone</code>.
-      </p>
     </div>
   );
 }
