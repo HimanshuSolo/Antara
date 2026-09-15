@@ -25,8 +25,7 @@ export default function LivePage() {
         <h2>Curated examples: on-demand frame generation</h2>
         <p className="prose">
           These (t&minus;1, t+1) pairs are curated from real GOES-16 events: Hurricane
-          Milton&apos;s eyewall in 2024, and calm, off-season weather for comparison, served by{" "}
-          <code>src/api/gallery.py</code>. No computation occurs until the Generate button is
+          Milton&apos;s eyewall in 2024, and calm, off-season weather for comparison. No computation occurs until the Generate button is
           clicked, which triggers the real Farneback and FILM pipeline for that pair. Unlike the
           live pipeline above, these triplets have a real ground-truth middle frame available on
           disk, so each result includes genuine PSNR, SSIM, and LPIPS accuracy figures rather
