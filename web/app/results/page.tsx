@@ -110,7 +110,7 @@ export default function ResultsPage() {
           }))}
         />
         <p className="caveat">
-          Executed in <code>notebooks/finetune_on_colab.ipynb</code> on a Colab T4 GPU.
+          Executed on a Colab T4 GPU.
         </p>
       </section>
 

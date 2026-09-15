@@ -20,13 +20,6 @@ export default function LivePage() {
 
       <LivePipeline />
 
-      <p className="caveat">
-        Requires the API server to be running locally: run{" "}
-        <code>.venv/bin/uvicorn src.api.live:app --reload --port 8000</code> from the
-        repository root (<code>models/</code> must contain a FILM checkpoint &mdash; see the
-        root README&apos;s Setup section). See <code>web/README.md</code> for further details.
-      </p>
-
       <div className="section--tight" style={{ marginTop: "3.5rem" }}>
         <div className="section-label">Gallery</div>
         <h2>Curated examples: on-demand frame generation</h2>
