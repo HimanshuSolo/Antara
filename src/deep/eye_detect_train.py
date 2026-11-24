@@ -8,15 +8,18 @@ N+1's t-1), so a random split would leak near-duplicate frames across the
 boundary -- and the checkpoint saved is whichever epoch had the lowest
 validation loss, not just the last one.
 
-NOTE ON DATA: the only cyclone dataset in this repo right now is a single
-storm's (Milton's) ~4.5-hour window (see build_cyclone_dataset.py) -- enough
-to prove the training loop works, but not enough storm diversity for a
-genuinely generalizing detector (train and val both come from one
-continuous storm track). A real result needs pooling several storms
-(`build_cyclone_dataset.py --storm-name ...` once per storm, then passing
-every resulting directory to `--triplets-dirs`), the same "small-scale
-local proof of concept now, full run separately" pattern this project
-already used for FILM's fine-tuning (see notebooks/finetune_on_colab.ipynb).
+MULTI-STORM RESULT (run for real): pooling Milton + Helene + Beryl via
+`--triplets-dirs` and evaluating on Rafael -- a storm never passed to this
+function -- shows raw point accuracy getting *worse* under pooling (a
+small from-scratch CNN spread across more storm appearances with the same
+model capacity/data budget), but the interpolation-preserves-position
+drift metric this detector exists to measure holds up on the unseen
+storm: see README.md's eye-tracking bullet for the numbers. The original
+single-storm (Milton-only) checkpoint remains what `src/api/track.py`
+serves, since it's the more accurate detector for the gallery items it
+answers questions about -- the pooled checkpoint
+(`models/eye_detect_cnn_multistorm.pt`) is the generalization study, not
+a production swap.
 """
 from __future__ import annotations
 
