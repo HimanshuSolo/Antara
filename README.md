@@ -177,11 +177,30 @@ on fast, non-linear cloud dynamics.
       position far better than the classical baseline, not just pixel
       similarity. Exposed at `POST /api/track/{id}/detect`
       (`src/api/track.py`) and a new `/track` page (`EyeTracker` component),
-      separate from `/live`'s Gallery. The trained detector is a
-      single-storm proof of concept, not a generalization test -- pooling
-      several storms via `build_cyclone_dataset.py` before training is the
-      natural next step, the same path this project already took with
-      FILM's fine-tuning.
+      separate from `/live`'s Gallery.
+
+      **Multi-storm generalization (run for real):** the numbers above are
+      a single-storm (Milton) proof of concept -- train and val both drawn
+      from one continuous track. Following the same pattern as FILM's
+      fine-tuning (train on several, test on one fully unseen), the CNN
+      was retrained pooled across three storms (Milton + Helene + Beryl,
+      `eye_detect_train.py --triplets-dirs`) and evaluated on a fourth,
+      **Rafael, never touched during training**. Raw point accuracy gets
+      *worse* under pooling -- 6.28px (single-storm, on Milton) vs. 10.44px
+      (pooled, on Milton) vs. 14.35px (pooled, on held-out Rafael) -- a
+      small from-scratch CNN spread across more storm appearances with no
+      increase in model capacity or data budget, not a free win. But the
+      metric this feature actually exists to answer -- does FILM preserve
+      eye position better than Farneback -- holds up on a storm the model
+      never saw: 0.76px drift for Farneback vs. **0.21px for FILM** on
+      Rafael, the same lopsided gap as Milton's single-storm result (and
+      Milton's own drift gap *tightens* under the pooled checkpoint, to
+      0.89px vs. 0.57px). The live `/track` demo still serves the
+      single-storm checkpoint (`models/eye_detect_cnn.pt`), since it's the
+      more accurate detector for the curated gallery items it answers
+      questions about; the pooled checkpoint
+      (`models/eye_detect_cnn_multistorm.pt`) is the generalization result
+      above, not a production swap.
 - [ ] INSAT-3D/3DR validation via MOSDAC (stretch).
 
 See the full plan and rationale for each step at
