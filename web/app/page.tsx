@@ -24,7 +24,9 @@ export default function Home() {
     <>
       <section className="section container">
         <div className="section-label">Satellite temporal super-resolution</div>
-        <h1>Reconstructing missing frames between satellite scans.</h1>
+        <h1>
+          Reconstructing <span className="accent">missing frames</span> between satellite scans.
+        </h1>
         <p className="lede">
           Geostationary satellites image the same region every 10–30 minutes, which is too
           coarse to track cyclones, storm cells, or smoke plumes in near real time. This project
