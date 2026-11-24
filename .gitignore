@@ -17,6 +17,9 @@ node_modules/
 /data/processed/triplets_calm/triplet_*/
 /data/processed/triplets_cyclone/triplet_*/
 /data/processed/triplets_cyclone/eye_labels.csv
+/data/processed/triplets_cyclone_helene/
+/data/processed/triplets_cyclone_beryl/
+/data/processed/triplets_cyclone_rafael/
 /data/processed/triplets_finetune/
 /data/processed/triplets_finetune_full/
 /data/processed/triplets_test/
