@@ -8,6 +8,11 @@ export default function PsnrBarChart() {
       key: `${subset.subset}-${result.method}`,
       label: `${result.method} — ${subset.subset}`,
       value: result.psnr,
+      fillClass: result.method.startsWith("FILM")
+        ? "bar-fill--film"
+        : result.method.startsWith("Farneback")
+          ? "bar-fill--farneback"
+          : "",
     })),
   );
 
@@ -21,7 +26,7 @@ export default function PsnrBarChart() {
           </div>
           <div className="bar-track">
             <div
-              className="bar-fill"
+              className={`bar-fill ${row.fillClass}`}
               style={{ width: `${Math.min(100, (row.value / MAX_PSNR) * 100)}%` }}
             />
           </div>
